@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegas Street Fighter League Rankings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FFD700;
+            --secondary: #FF1744;
+            --dark: #0A0A0F;
+            --accent: #00E5FF;
+            --text: #E8E8E8;
+            --surface: #1A1A24;
+            --border: rgba(255, 215, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: linear-gradient(135deg, #0A0A0F 0%, #1A1A24 50%, #0F0A14 100%);
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 23, 68, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+            }
+            to {
+                filter: drop-shadow(0 0 20px rgba(255, 23, 68, 0.5));
+            }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--primary);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .season-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .season-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 12px 30px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .season-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .season-btn:hover::before {
+            left: 100%;
+        }
+
+        .season-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .season-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-color: var(--primary);
+            color: var(--dark);
+            font-weight: 800;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text);
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        .rankings-table {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            margin-bottom: 60px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 23, 68, 0.1) 100%);
+            padding: 20px 30px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .table-header h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        th {
+            padding: 20px 15px;
+            text-align: left;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.85rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th:first-child {
+            padding-left: 30px;
+        }
+
+        td {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        td:first-child {
+            padding-left: 30px;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .rank {
+            font-weight: 800;
+            font-size: 1.3rem;
+            font-family: 'Bebas Neue', sans-serif;
+            color: var(--primary);
+            min-width: 50px;
+        }
+
+        .rank-1 { 
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .rank-2 { 
+            color: #C0C0C0;
+        }
+
+        .rank-3 { 
+            color: #CD7F32;
+        }
+
+        .player-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .points {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .week-results {
+            margin-top: 40px;
+        }
+
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .week-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .week-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+            border-color: var(--primary);
+        }
+
+        .week-header {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            letter-spacing: 0.1em;
+        }
+
+        .week-result {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .week-result:last-child {
+            border-bottom: none;
+        }
+
+        .week-player {
+            font-weight: 600;
+        }
+
+        .week-points {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--secondary);
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid var(--secondary);
+            margin: 20px;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                padding: 15px 10px;
+            }
+            
+            th:first-child, td:first-child {
+                padding-left: 15px;
+            }
+
+            .logo {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grain"></div>
+    <div class="container">
+        <header>
+            <h1 class="logo">Vegas Street Fighter League</h1>
+            <p class="subtitle">Local Rankings</p>
+        </header>
+
+        <div class="season-selector" id="seasonSelector">
+            <!-- Season buttons will be populated here -->
+        </div>
+
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-label">Current Leader</div>
+                <div class="stat-value" id="currentLeader">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Weeks Completed</div>
+                <div class="stat-value" id="weeksCompleted">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Players</div>
+                <div class="stat-value" id="totalPlayers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Attendance</div>
+                <div class="stat-value" id="avgAttendance">0</div>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="loading">Loading rankings...</div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION - Replace with your Google Sheets ID
+        const SHEET_ID = '1UHin_dge2eKCd-ONx3k6AG8FCudayfcf2YgWN9q0BO4';
+        
+        let allData = {};
+        let currentSeason = '';
+
+        // Initialize the page
+        async function init() {
+            try {
+                await loadData();
+                renderSeasonSelector();
+                if (currentSeason) {
+                    renderSeason(currentSeason);
+                }
+            } catch (error) {
+                showError('Failed to load data. Please check your Google Sheets configuration.');
+                console.error(error);
+            }
+        }
+
+        // Load data from Google Sheets
+        async function loadData() {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+            const response = await fetch(url);
+            const text = await response.text();
+            const json = JSON.parse(text.substr(47).slice(0, -2));
+            
+            parseData(json.table.rows);
+        }
+
+        // Parse the Google Sheets data
+        function parseData(rows) {
+            allData = {};
+            let currentSeasonName = '';
+            let weekData = [];
+
+            rows.forEach((row, index) => {
+                const cells = row.c || [];
+                const firstCell = cells[0]?.v || '';
+
+                // Check if this is a season header
+                if (firstCell.toString().toLowerCase().startsWith('season')) {
+                    // Save previous season data if exists
+                    if (currentSeasonName && weekData.length > 0) {
+                        allData[currentSeasonName] = processSeasonData(weekData);
+                    }
+                    
+                    currentSeasonName = firstCell;
+                    weekData = [];
+                    currentSeason = currentSeasonName; // Set the first season as current
+                } 
+                // Check if this is a week header
+                else if (firstCell.toString().toLowerCase().startsWith('week')) {
+                    // Skip header row, data starts next row
+                } 
+                // This is data
+                else if (cells.length >= 3 && firstCell) {
+                    const player = firstCell;
+                    const placement = cells[1]?.v || '';
+                    const points = parseFloat(cells[2]?.v || 0);
+                    const weekNum = cells[3]?.v || 'Week 1'; // Week identifier
+
+                    weekData.push({ player, placement, points, week: weekNum });
+                }
+            });
+
+            // Save last season
+            if (currentSeasonName && weekData.length > 0) {
+                allData[currentSeasonName] = processSeasonData(weekData);
+            }
+        }
+
+        // Process season data to calculate standings
+        function processSeasonData(weekData) {
+            const playerData = {};
+            const weekResults = {};
+
+            // Organize data by player and week
+            weekData.forEach(entry => {
+                if (!playerData[entry.player]) {
+                    playerData[entry.player] = {
+                        weeks: {},
+                        totalPoints: 0,
+                        weeksAttended: 0
+                    };
+                }
+
+                playerData[entry.player].weeks[entry.week] = {
+                    placement: entry.placement,
+                    points: entry.points
+                };
+
+                // Organize by week for week-by-week display
+                if (!weekResults[entry.week]) {
+                    weekResults[entry.week] = [];
+                }
+                weekResults[entry.week].push({
+                    player: entry.player,
+                    placement: entry.placement,
+                    points: entry.points
+                });
+            });
+
+            // Calculate standings with worst week dropped
+            const standings = Object.entries(playerData).map(([player, data]) => {
+                const weekScores = Object.values(data.weeks).map(w => w.points);
+                const weeksAttended = weekScores.length;
+                
+                // Sort scores and drop the lowest if more than 1 week attended
+                weekScores.sort((a, b) => b - a);
+                const countedScores = weeksAttended > 1 ? weekScores.slice(0, -1) : weekScores;
+                const totalPoints = countedScores.reduce((sum, pts) => sum + pts, 0);
+
+                return {
+                    player,
+                    totalPoints,
+                    weeksAttended,
+                    weeks: data.weeks
+                };
+            });
+
+            // Sort by total points
+            standings.sort((a, b) => b.totalPoints - a.totalPoints);
+
+            return {
+                standings,
+                weekResults
+            };
+        }
+
+        // Render season selector buttons
+        function renderSeasonSelector() {
+            const selector = document.getElementById('seasonSelector');
+            const seasons = Object.keys(allData).reverse(); // Show most recent first
+            
+            selector.innerHTML = seasons.map(season => 
+                `<button class="season-btn ${season === currentSeason ? 'active' : ''}" 
+                         onclick="selectSeason('${season}')">${season}</button>`
+            ).join('');
+        }
+
+        // Select a season
+        function selectSeason(season) {
+            currentSeason = season;
+            renderSeasonSelector();
+            renderSeason(season);
+        }
+
+        // Render a season's data
+        function renderSeason(season) {
+            const data = allData[season];
+            if (!data) return;
+
+            const { standings, weekResults } = data;
+            
+            // Update stats
+            document.getElementById('statsGrid').style.display = 'grid';
+            document.getElementById('currentLeader').textContent = standings[0]?.player || '-';
+            document.getElementById('weeksCompleted').textContent = Object.keys(weekResults).length;
+            document.getElementById('totalPlayers').textContent = standings.length;
+            
+            // Calculate average attendance
+            const totalAttendance = Object.values(weekResults).reduce((sum, week) => sum + week.length, 0);
+            const avgAttendance = (totalAttendance / Object.keys(weekResults).length).toFixed(1);
+            document.getElementById('avgAttendance').textContent = avgAttendance;
+
+            // Render standings table
+            const standingsHTML = `
+                <div class="rankings-table">
+                    <div class="table-header">
+                        <h2>Current Standings</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Total Points</th>
+                                <th>Weeks Attended</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${standings.map((player, index) => `
+                                <tr>
+                                    <td class="rank rank-${index + 1}">#${index + 1}</td>
+                                    <td class="player-name">${player.player}</td>
+                                    <td class="points">${player.totalPoints}</td>
+                                    <td>${player.weeksAttended}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Render week-by-week results
+            const weeks = Object.keys(weekResults).sort();
+            const weekResultsHTML = `
+                <div class="week-results">
+                    <div class="rankings-table">
+                        <div class="table-header">
+                            <h2>Week by Week Results</h2>
+                        </div>
+                    </div>
+                    <div class="week-grid">
+                        ${weeks.map(week => {
+                            const results = weekResults[week].sort((a, b) => b.points - a.points);
+                            return `
+                                <div class="week-card">
+                                    <div class="week-header">${week}</div>
+                                    ${results.map(result => `
+                                        <div class="week-result">
+                                            <span class="week-player">${result.player}</span>
+                                            <span class="week-points">${result.points} pts</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = standingsHTML + weekResultsHTML;
+        }
+
+        function showError(message) {
+            document.getElementById('content').innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
