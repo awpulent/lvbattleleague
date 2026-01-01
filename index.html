@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vegas Street Fighter League Rankings</title>
+    <title>Street Fighter League Rankings</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -379,7 +379,7 @@
     <div class="grain"></div>
     <div class="container">
         <header>
-            <h1 class="logo">Vegas Street Fighter League</h1>
+            <h1 class="logo">Las Vegas Street Fighter League</h1>
             <p class="subtitle">Local Rankings</p>
         </header>
 
@@ -413,6 +413,7 @@
 
     <script>
         // CONFIGURATION - Replace with your Google Sheets ID
+        // Your Sheet ID is the long string in the URL between /d/ and /edit
         const SHEET_ID = '1UHin_dge2eKCd-ONx3k6AG8FCudayfcf2YgWN9q0BO4';
         
         let allData = {};
@@ -427,19 +428,52 @@
                     renderSeason(currentSeason);
                 }
             } catch (error) {
-                showError('Failed to load data. Please check your Google Sheets configuration.');
-                console.error(error);
+                showError('Failed to load data. Make sure your Google Sheet is shared with "Anyone with the link can view".');
+                console.error('Error details:', error);
             }
         }
 
         // Load data from Google Sheets
         async function loadData() {
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-            const response = await fetch(url);
-            const text = await response.text();
-            const json = JSON.parse(text.substr(47).slice(0, -2));
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
             
-            parseData(json.table.rows);
+            console.log('Fetching from:', url);
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const text = await response.text();
+            console.log('Data fetched successfully, parsing...');
+            parseCSVData(text);
+        }
+
+        // Parse CSV data
+        function parseCSVData(csvText) {
+            const lines = csvText.split('\n').map(line => {
+                // Simple CSV parser (handles basic cases)
+                const cols = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        cols.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                cols.push(current.trim());
+                return cols;
+            });
+
+            parseData(lines);
         }
 
         // Parse the Google Sheets data
@@ -448,12 +482,14 @@
             let currentSeasonName = '';
             let weekData = [];
 
-            rows.forEach((row, index) => {
-                const cells = row.c || [];
-                const firstCell = cells[0]?.v || '';
+            rows.forEach((cols, index) => {
+                // Skip empty rows
+                if (!cols || cols.length === 0 || !cols[0]) return;
+                
+                const firstCell = cols[0].toString().trim();
 
                 // Check if this is a season header
-                if (firstCell.toString().toLowerCase().startsWith('season')) {
+                if (firstCell.toLowerCase().startsWith('season')) {
                     // Save previous season data if exists
                     if (currentSeasonName && weekData.length > 0) {
                         allData[currentSeasonName] = processSeasonData(weekData);
@@ -461,18 +497,18 @@
                     
                     currentSeasonName = firstCell;
                     weekData = [];
-                    currentSeason = currentSeasonName; // Set the first season as current
+                    if (!currentSeason) currentSeason = currentSeasonName; // Set the first season as current
                 } 
                 // Check if this is a week header
-                else if (firstCell.toString().toLowerCase().startsWith('week')) {
+                else if (firstCell.toLowerCase().startsWith('week')) {
                     // Skip header row, data starts next row
                 } 
                 // This is data
-                else if (cells.length >= 3 && firstCell) {
+                else if (cols.length >= 3 && firstCell) {
                     const player = firstCell;
-                    const placement = cells[1]?.v || '';
-                    const points = parseFloat(cells[2]?.v || 0);
-                    const weekNum = cells[3]?.v || 'Week 1'; // Week identifier
+                    const placement = cols[1] || '';
+                    const points = parseFloat(cols[2] || 0);
+                    const weekNum = cols[3] || 'Week 1'; // Week identifier
 
                     weekData.push({ player, placement, points, week: weekNum });
                 }
