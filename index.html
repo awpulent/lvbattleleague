@@ -524,9 +524,12 @@
         function processSeasonData(weekData) {
             const playerData = {};
             const weekResults = {};
+            const allWeeks = new Set();
 
-            // Organize data by player and week
+            // Organize data by player and week, and track all weeks
             weekData.forEach(entry => {
+                allWeeks.add(entry.week);
+                
                 if (!playerData[entry.player]) {
                     playerData[entry.player] = {
                         weeks: {},
@@ -553,12 +556,16 @@
 
             // Calculate standings with worst week dropped
             const standings = Object.entries(playerData).map(([player, data]) => {
-                const weekScores = Object.values(data.weeks).map(w => w.points);
-                const weeksAttended = weekScores.length;
+                const weeksAttended = Object.keys(data.weeks).length;
                 
-                // Sort scores and drop the lowest if more than 1 week attended
-                weekScores.sort((a, b) => b - a);
-                const countedScores = weeksAttended > 1 ? weekScores.slice(0, -1) : weekScores;
+                // Create array of all weeks with scores (0 for missed weeks)
+                const allWeekScores = Array.from(allWeeks).map(week => {
+                    return data.weeks[week] ? data.weeks[week].points : 0;
+                });
+                
+                // Sort scores and drop the lowest
+                allWeekScores.sort((a, b) => b - a);
+                const countedScores = allWeekScores.length > 1 ? allWeekScores.slice(0, -1) : allWeekScores;
                 const totalPoints = countedScores.reduce((sum, pts) => sum + pts, 0);
 
                 return {
