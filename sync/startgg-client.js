@@ -90,7 +90,7 @@ async function getEventStandings(eventId, page = 1, perPage = 50) {
 }
 
 // Get event sets with game data
-async function getEventSets(eventId, page = 1, perPage = 50) {
+async function getEventSets(eventId, page = 1, perPage = 10) {
     const data = await gqlQuery(`
         query EventSets($eventId: ID!, $page: Int!, $perPage: Int!) {
             event(id: $eventId) {
