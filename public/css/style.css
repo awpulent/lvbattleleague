@@ -229,6 +229,8 @@ header {
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 23, 68, 0.1) 100%);
     padding: 20px 30px;
     border-bottom: 2px solid var(--primary);
+    position: sticky;
+    left: 0;
 }
 
 .table-header h2 {

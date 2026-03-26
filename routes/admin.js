@@ -28,6 +28,19 @@ router.get('/', adminAuth, async (req, res) => {
     }
 });
 
+// Rename a season
+router.post('/rename-season', adminAuth, async (req, res) => {
+    try {
+        const { seasonId, name } = req.body;
+        if (!seasonId || !name) return res.status(400).json({ error: 'seasonId and name required' });
+        await pool.query('UPDATE seasons SET name = $1 WHERE id = $2', [name, parseInt(seasonId)]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Rename season error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Clear a season's tournament data (placements, sets, games, tournaments) so it can be re-synced
 router.post('/clear-season', adminAuth, async (req, res) => {
     try {
