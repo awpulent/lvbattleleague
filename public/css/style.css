@@ -237,6 +237,13 @@ header {
     color: var(--primary);
 }
 
+.table-hint {
+    font-size: 0.85rem;
+    color: var(--text);
+    opacity: 0.5;
+    margin-top: 5px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
