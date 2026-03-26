@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getPlayer, getOverallRecord, getHeadToHead, getCharacterUsage, getMatchHistory, getSeasonPlacements, getH2HCharacters } = require('../queries/players');
+const { getPlayer, getOverallRecord, getHeadToHead, getCharacterUsage, getMatchHistory, getSeasonPlacements } = require('../queries/players');
 const { CHARACTER_ICONS } = require('../sync/characters');
 
 router.get('/:id', async (req, res) => {
@@ -12,13 +12,12 @@ router.get('/:id', async (req, res) => {
             return res.status(404).render('error', { message: 'Player not found' });
         }
 
-        const [record, h2h, characters, matches, seasonHistory, h2hChars] = await Promise.all([
+        const [record, h2h, characters, matches, seasonHistory] = await Promise.all([
             getOverallRecord(playerId),
             getHeadToHead(playerId),
             getCharacterUsage(playerId),
             getMatchHistory(playerId),
-            getSeasonPlacements(playerId),
-            getH2HCharacters(playerId)
+            getSeasonPlacements(playerId)
         ]);
 
         const winrate = (parseInt(record.wins) + parseInt(record.losses)) > 0
@@ -30,7 +29,6 @@ router.get('/:id', async (req, res) => {
             record,
             winrate,
             h2h,
-            h2hChars,
             characters,
             matches,
             seasonHistory,

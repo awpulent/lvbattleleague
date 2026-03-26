@@ -64,6 +64,7 @@ async function getCharacterUsage(playerId) {
 }
 
 async function getMatchHistory(playerId, limit = 50) {
+    // Get sets
     const { rows } = await pool.query(`
         SELECT
             s.id as set_id,
@@ -85,6 +86,37 @@ async function getMatchHistory(playerId, limit = 50) {
         ORDER BY t.date DESC, s.id DESC
         LIMIT $2
     `, [playerId, limit]);
+
+    if (!rows.length) return rows;
+
+    // Get characters used per set
+    const setIds = rows.map(r => r.set_id);
+    const { rows: gameRows } = await pool.query(`
+        SELECT
+            g.set_id,
+            CASE WHEN g.winner_id = $1 THEN g.winner_char ELSE g.loser_char END as player_char,
+            CASE WHEN g.winner_id = $1 THEN g.loser_char ELSE g.winner_char END as opponent_char
+        FROM games g
+        JOIN sets s ON g.set_id = s.id
+        WHERE g.set_id = ANY($2)
+          AND (s.winner_id = $1 OR s.loser_id = $1)
+    `, [playerId, setIds]);
+
+    // Group characters by set
+    const setChars = {};
+    gameRows.forEach(g => {
+        if (!setChars[g.set_id]) setChars[g.set_id] = { playerChars: new Set(), opponentChars: new Set() };
+        if (g.player_char) setChars[g.set_id].playerChars.add(g.player_char);
+        if (g.opponent_char) setChars[g.set_id].opponentChars.add(g.opponent_char);
+    });
+
+    // Attach to rows
+    rows.forEach(r => {
+        const chars = setChars[r.set_id];
+        r.playerChars = chars ? Array.from(chars.playerChars) : [];
+        r.opponentChars = chars ? Array.from(chars.opponentChars) : [];
+    });
+
     return rows;
 }
 

@@ -39,7 +39,6 @@
         <thead>
             <tr>
                 <th>Opponent</th>
-                <th>Characters</th>
                 <th>Wins</th>
                 <th>Losses</th>
                 <th>Winrate</th>
@@ -50,30 +49,10 @@
                 const w = parseInt(opp.wins);
                 const l = parseInt(opp.losses);
                 const wr = ((w / (w + l)) * 100).toFixed(1);
-                const oppChars = h2hChars[opp.opponent_id] || { playerChars: [], opponentChars: [] };
             %>
             <tr>
                 <td class="player-name">
                     <a href="/player/<%= opp.opponent_id %>"><%= opp.opponent_name %></a>
-                </td>
-                <td class="h2h-chars">
-                    <div class="char-matchup">
-                        <span class="char-icons">
-                            <% oppChars.playerChars.forEach(ch => { %>
-                                <% if (charIcons[ch]) { %>
-                                    <img src="<%= charIcons[ch] %>" alt="<%= ch %>" class="char-icon-sm" title="<%= ch %>">
-                                <% } %>
-                            <% }) %>
-                        </span>
-                        <span class="vs-label">vs</span>
-                        <span class="char-icons">
-                            <% oppChars.opponentChars.forEach(ch => { %>
-                                <% if (charIcons[ch]) { %>
-                                    <img src="<%= charIcons[ch] %>" alt="<%= ch %>" class="char-icon-sm" title="<%= ch %>">
-                                <% } %>
-                            <% }) %>
-                        </span>
-                    </div>
                 </td>
                 <td class="wins"><%= opp.wins %></td>
                 <td class="losses"><%= opp.losses %></td>
@@ -122,6 +101,7 @@
         <thead>
             <tr>
                 <th>Result</th>
+                <th>Matchup</th>
                 <th>Opponent</th>
                 <th>Score</th>
                 <th>Round</th>
@@ -133,6 +113,29 @@
             <tr>
                 <td style="color: <%= m.result === 'win' ? '#4CAF50' : 'var(--secondary)' %>; font-weight: 800;">
                     <%= m.result === 'win' ? 'W' : 'L' %>
+                </td>
+                <td class="h2h-chars">
+                    <% if (m.playerChars.length || m.opponentChars.length) { %>
+                    <div class="char-matchup">
+                        <span class="char-icons">
+                            <% m.playerChars.forEach(ch => { %>
+                                <% if (charIcons[ch]) { %>
+                                    <img src="<%= charIcons[ch] %>" alt="<%= ch %>" class="char-icon-sm" title="<%= ch %>">
+                                <% } %>
+                            <% }) %>
+                        </span>
+                        <span class="vs-label">vs</span>
+                        <span class="char-icons">
+                            <% m.opponentChars.forEach(ch => { %>
+                                <% if (charIcons[ch]) { %>
+                                    <img src="<%= charIcons[ch] %>" alt="<%= ch %>" class="char-icon-sm" title="<%= ch %>">
+                                <% } %>
+                            <% }) %>
+                        </span>
+                    </div>
+                    <% } else { %>
+                        —
+                    <% } %>
                 </td>
                 <td class="player-name">
                     <a href="/player/<%= m.opponent_id %>"><%= m.opponent_name %></a>
