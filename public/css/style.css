@@ -432,6 +432,26 @@ tbody tr:hover {
 
 .h2h-table {
     width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.h2h-table th:first-child,
+.h2h-table td:first-child {
+    width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.h2h-table th:nth-child(2),
+.h2h-table td:nth-child(2),
+.h2h-table th:nth-child(3),
+.h2h-table td:nth-child(3),
+.h2h-table th:nth-child(4),
+.h2h-table td:nth-child(4) {
+    width: 18%;
+    text-align: center;
 }
 
 .h2h-table .wins {
@@ -592,6 +612,10 @@ tbody tr:hover {
 
     table {
         min-width: 500px;
+    }
+
+    .h2h-table {
+        min-width: 0;
     }
 
     th, td {
