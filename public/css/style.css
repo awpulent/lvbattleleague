@@ -305,13 +305,14 @@ tbody tr:hover {
 }
 
 .player-name a {
-    color: inherit;
+    color: var(--accent);
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .player-name a:hover {
-    color: var(--accent);
+    color: var(--primary);
+    text-decoration: underline;
 }
 
 .points {
@@ -370,13 +371,14 @@ tbody tr:hover {
 }
 
 .week-player a {
-    color: inherit;
+    color: var(--accent);
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .week-player a:hover {
-    color: var(--accent);
+    color: var(--primary);
+    text-decoration: underline;
 }
 
 .week-points {
