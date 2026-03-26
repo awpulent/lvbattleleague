@@ -106,4 +106,32 @@ async function getSeasonPlacements(playerId) {
     return rows;
 }
 
-module.exports = { getPlayer, getOverallRecord, getHeadToHead, getCharacterUsage, getMatchHistory, getSeasonPlacements };
+// Get characters used by this player against each opponent
+async function getH2HCharacters(playerId) {
+    const { rows } = await pool.query(`
+        SELECT
+            CASE WHEN s.winner_id = $1 THEN s.loser_id ELSE s.winner_id END as opponent_id,
+            CASE WHEN g.winner_id = $1 THEN g.winner_char ELSE g.loser_char END as player_char,
+            CASE WHEN g.winner_id = $1 THEN g.loser_char ELSE g.winner_char END as opponent_char
+        FROM games g
+        JOIN sets s ON g.set_id = s.id
+        WHERE (s.winner_id = $1 OR s.loser_id = $1)
+    `, [playerId]);
+
+    // Group by opponent: { opponentId: { playerChars: Set, opponentChars: Set } }
+    const result = {};
+    rows.forEach(r => {
+        if (!result[r.opponent_id]) result[r.opponent_id] = { playerChars: new Set(), opponentChars: new Set() };
+        if (r.player_char) result[r.opponent_id].playerChars.add(r.player_char);
+        if (r.opponent_char) result[r.opponent_id].opponentChars.add(r.opponent_char);
+    });
+
+    // Convert sets to arrays
+    for (const key in result) {
+        result[key].playerChars = Array.from(result[key].playerChars);
+        result[key].opponentChars = Array.from(result[key].opponentChars);
+    }
+    return result;
+}
+
+module.exports = { getPlayer, getOverallRecord, getHeadToHead, getCharacterUsage, getMatchHistory, getSeasonPlacements, getH2HCharacters };

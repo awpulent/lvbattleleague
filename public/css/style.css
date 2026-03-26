@@ -457,6 +457,24 @@ tbody tr:hover {
     align-items: center;
 }
 
+.character-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.char-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+}
+
+.char-icon-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 3px;
+}
+
 .character-name {
     font-weight: 600;
 }
@@ -466,6 +484,30 @@ tbody tr:hover {
     font-weight: 800;
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.3rem;
+}
+
+/* H2H Character Matchup */
+.h2h-chars {
+    padding: 5px 0;
+}
+
+.char-matchup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.char-icons {
+    display: flex;
+    gap: 3px;
+}
+
+.vs-label {
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.7;
 }
 
 .back-link {

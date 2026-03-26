@@ -18,7 +18,12 @@
 <div class="character-list">
     <% characters.forEach(c => { %>
     <div class="character-card">
-        <span class="character-name"><%= c.character %></span>
+        <div class="character-info">
+            <% if (charIcons[c.character]) { %>
+                <img src="<%= charIcons[c.character] %>" alt="<%= c.character %>" class="char-icon">
+            <% } %>
+            <span class="character-name"><%= c.character %></span>
+        </div>
         <span class="character-count"><%= c.times_used %></span>
     </div>
     <% }) %>
@@ -34,6 +39,7 @@
         <thead>
             <tr>
                 <th>Opponent</th>
+                <th>Characters</th>
                 <th>Wins</th>
                 <th>Losses</th>
                 <th>Winrate</th>
@@ -44,10 +50,30 @@
                 const w = parseInt(opp.wins);
                 const l = parseInt(opp.losses);
                 const wr = ((w / (w + l)) * 100).toFixed(1);
+                const oppChars = h2hChars[opp.opponent_id] || { playerChars: [], opponentChars: [] };
             %>
             <tr>
                 <td class="player-name">
                     <a href="/player/<%= opp.opponent_id %>"><%= opp.opponent_name %></a>
+                </td>
+                <td class="h2h-chars">
+                    <div class="char-matchup">
+                        <span class="char-icons">
+                            <% oppChars.playerChars.forEach(ch => { %>
+                                <% if (charIcons[ch]) { %>
+                                    <img src="<%= charIcons[ch] %>" alt="<%= ch %>" class="char-icon-sm" title="<%= ch %>">
+                                <% } %>
+                            <% }) %>
+                        </span>
+                        <span class="vs-label">vs</span>
+                        <span class="char-icons">
+                            <% oppChars.opponentChars.forEach(ch => { %>
+                                <% if (charIcons[ch]) { %>
+                                    <img src="<%= charIcons[ch] %>" alt="<%= ch %>" class="char-icon-sm" title="<%= ch %>">
+                                <% } %>
+                            <% }) %>
+                        </span>
+                    </div>
                 </td>
                 <td class="wins"><%= opp.wins %></td>
                 <td class="losses"><%= opp.losses %></td>
