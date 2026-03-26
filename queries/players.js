@@ -39,15 +39,23 @@ async function getHeadToHead(playerId) {
 }
 
 async function getCharacterUsage(playerId) {
+    // games table has winner_id + winner_char + loser_char but no loser_id
+    // When player won the game: their char is winner_char
+    // When player lost the game: join to sets to confirm they're in the set, their char is loser_char
     const { rows } = await pool.query(`
         SELECT character, SUM(times_used) as times_used FROM (
             SELECT winner_char as character, COUNT(*) as times_used
-            FROM games WHERE winner_id = $1 AND winner_char IS NOT NULL
+            FROM games
+            WHERE winner_id = $1 AND winner_char IS NOT NULL
             GROUP BY winner_char
             UNION ALL
-            SELECT loser_char as character, COUNT(*) as times_used
-            FROM games WHERE loser_id = $1 AND loser_char IS NOT NULL
-            GROUP BY loser_char
+            SELECT g.loser_char as character, COUNT(*) as times_used
+            FROM games g
+            JOIN sets s ON g.set_id = s.id
+            WHERE g.winner_id != $1
+              AND (s.winner_id = $1 OR s.loser_id = $1)
+              AND g.loser_char IS NOT NULL
+            GROUP BY g.loser_char
         ) combined
         GROUP BY character
         ORDER BY SUM(times_used) DESC
