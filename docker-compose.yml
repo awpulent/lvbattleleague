@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://lvbl:lvbl@db:5432/lvbattleleague
+      - STARTGG_API_TOKEN=${STARTGG_API_TOKEN}
+      - ADMIN_SECRET=${ADMIN_SECRET}
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: lvbattleleague
+      POSTGRES_USER: lvbl
+      POSTGRES_PASSWORD: lvbl
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+volumes:
+  pgdata:

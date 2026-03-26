@@ -1,0 +1,24 @@
+<% if (weeks && Object.keys(weeks).length > 0) { %>
+<div class="week-results">
+    <div class="rankings-table">
+        <div class="table-header">
+            <h2>Week by Week Results</h2>
+        </div>
+    </div>
+    <div class="week-grid">
+        <% Object.keys(weeks).forEach(weekName => { %>
+            <div class="week-card">
+                <div class="week-header"><%= weekName %></div>
+                <% weeks[weekName].forEach(result => { %>
+                    <div class="week-result">
+                        <span class="week-player">
+                            <a href="/player/<%= result.player_id %>"><%= result.player_name %></a>
+                        </span>
+                        <span class="week-points"><%= result.points %> pts</span>
+                    </div>
+                <% }) %>
+            </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>

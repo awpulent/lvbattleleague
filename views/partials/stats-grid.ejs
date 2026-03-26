@@ -1,0 +1,20 @@
+<% if (stats) { %>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Current Leader</div>
+        <div class="stat-value"><%= stats.leader %></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Events Completed</div>
+        <div class="stat-value"><%= stats.weekCount %></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Players</div>
+        <div class="stat-value"><%= stats.totalPlayers %></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Avg Attendance</div>
+        <div class="stat-value"><%= stats.avgAttendance %></div>
+    </div>
+</div>
+<% } %>

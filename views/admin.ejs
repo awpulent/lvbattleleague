@@ -1,0 +1,74 @@
+<%- include('partials/header') %>
+
+<h2 class="section-title">Sync Tournament</h2>
+<div class="rankings-table" style="margin-bottom: 40px;">
+    <div style="padding: 20px 30px;">
+        <form action="/admin/sync?secret=<%= typeof process !== 'undefined' ? '' : '' %>" method="POST" style="display: flex; flex-direction: column; gap: 15px; max-width: 500px;">
+            <input type="hidden" name="adminSecret" value="">
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Tournament Slug</label>
+                <input type="text" name="tournamentSlug" placeholder="lv-battle-league-week-12" required
+                    style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+            </div>
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Season</label>
+                <select name="seasonId" required style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+                    <% seasons.forEach(s => { %>
+                        <option value="<%= s.id %>"><%= s.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Week Number</label>
+                <input type="number" name="weekNumber" min="1" required
+                    style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+            </div>
+            <button type="submit" class="season-btn active" style="cursor: pointer; border: none;">Sync Now</button>
+        </form>
+    </div>
+</div>
+
+<h2 class="section-title">Sponsors</h2>
+<div class="rankings-table" style="margin-bottom: 40px;">
+    <div style="padding: 20px 30px;">
+        <form action="/admin/sponsors?secret=<%= typeof process !== 'undefined' ? '' : '' %>" method="POST" enctype="multipart/form-data"
+            style="display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin-bottom: 30px;">
+            <input type="hidden" name="adminSecret" value="">
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Sponsor Name</label>
+                <input type="text" name="name" required
+                    style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+            </div>
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Logo File</label>
+                <input type="file" name="logo" accept="image/*" required
+                    style="color: var(--text); font-family: 'Barlow', sans-serif;">
+            </div>
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Website URL (optional)</label>
+                <input type="text" name="website_url" placeholder="https://..."
+                    style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+            </div>
+            <div>
+                <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Display Order</label>
+                <input type="number" name="display_order" value="0"
+                    style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+            </div>
+            <button type="submit" class="season-btn active" style="cursor: pointer; border: none;">Add Sponsor</button>
+        </form>
+
+        <% if (sponsors.length > 0) { %>
+        <h3 style="color: var(--primary); margin-bottom: 15px;">Current Sponsors</h3>
+        <% sponsors.forEach(s => { %>
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid var(--border);">
+                <img src="<%= s.logo_url %>" alt="<%= s.name %>" style="height: 30px;">
+                <span style="flex: 1;"><%= s.name %></span>
+                <form action="/admin/sponsors/<%= s.id %>/delete?secret=" method="POST" style="margin: 0;">
+                    <input type="hidden" name="adminSecret" value="">
+                    <button type="submit" style="background: var(--secondary); border: none; color: white; padding: 5px 10px; cursor: pointer; font-family: 'Barlow', sans-serif;">Delete</button>
+                </form>
+            </div>
+        <% }) %>
+        <% } %>
+    </div>
+</div>

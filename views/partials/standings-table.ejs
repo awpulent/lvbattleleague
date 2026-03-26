@@ -1,0 +1,29 @@
+<% if (standings && standings.length > 0) { %>
+<div class="rankings-table">
+    <div class="table-header">
+        <h2>Current Standings</h2>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Total Points</th>
+                <th>Weeks Attended</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% standings.forEach((player, index) => { %>
+            <tr>
+                <td class="rank rank-<%= index + 1 %>">#<%= index + 1 %></td>
+                <td class="player-name">
+                    <a href="/player/<%= player.player_db_id %>"><%= player.display_name %></a>
+                </td>
+                <td class="points"><%= parseFloat(player.total_points) %></td>
+                <td><%= player.weeks_attended %></td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+<% } %>

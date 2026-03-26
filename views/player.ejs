@@ -1,0 +1,127 @@
+<%- include('partials/header') %>
+
+<a href="/" class="back-link">&larr; Back to Standings</a>
+
+<div class="player-header">
+    <h1><%= player.display_name %></h1>
+    <% if (parseInt(record.wins) + parseInt(record.losses) > 0) { %>
+    <p class="player-record">
+        <span class="wins"><%= record.wins %>W</span> — <span class="losses"><%= record.losses %>L</span>
+        &nbsp;&nbsp;<span class="winrate">(<%= winrate %>%)</span>
+    </p>
+    <% } %>
+</div>
+
+<% if (characters.length > 0) { %>
+<h3 class="section-title">Most Played Characters</h3>
+<div class="character-list">
+    <% characters.forEach(c => { %>
+    <div class="character-card">
+        <span class="character-name"><%= c.character %></span>
+        <span class="character-count"><%= c.times_used %></span>
+    </div>
+    <% }) %>
+</div>
+<% } %>
+
+<% if (h2h.length > 0) { %>
+<div class="rankings-table">
+    <div class="table-header">
+        <h2>Head-to-Head Records</h2>
+    </div>
+    <table class="h2h-table">
+        <thead>
+            <tr>
+                <th>Opponent</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Winrate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% h2h.forEach(opp => {
+                const w = parseInt(opp.wins);
+                const l = parseInt(opp.losses);
+                const wr = ((w / (w + l)) * 100).toFixed(1);
+            %>
+            <tr>
+                <td class="player-name">
+                    <a href="/player/<%= opp.opponent_id %>"><%= opp.opponent_name %></a>
+                </td>
+                <td class="wins"><%= opp.wins %></td>
+                <td class="losses"><%= opp.losses %></td>
+                <td><%= wr %>%</td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+<% } %>
+
+<% if (seasonHistory.length > 0) { %>
+<div class="rankings-table" style="margin-top: 40px;">
+    <div class="table-header">
+        <h2>Season History</h2>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Season</th>
+                <th>Weeks</th>
+                <th>Total Points</th>
+                <th>Best Placement</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% seasonHistory.forEach(sh => { %>
+            <tr>
+                <td><%= sh.season_name %></td>
+                <td><%= sh.weeks_attended %></td>
+                <td class="points"><%= parseFloat(sh.total_points) %></td>
+                <td><%= sh.best_placement %></td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+<% } %>
+
+<% if (matches.length > 0) { %>
+<div class="rankings-table" style="margin-top: 40px;">
+    <div class="table-header">
+        <h2>Recent Match History</h2>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Result</th>
+                <th>Opponent</th>
+                <th>Score</th>
+                <th>Round</th>
+                <th>Event</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% matches.forEach(m => { %>
+            <tr>
+                <td style="color: <%= m.result === 'win' ? '#4CAF50' : 'var(--secondary)' %>; font-weight: 800;">
+                    <%= m.result === 'win' ? 'W' : 'L' %>
+                </td>
+                <td class="player-name">
+                    <a href="/player/<%= m.opponent_id %>"><%= m.opponent_name %></a>
+                </td>
+                <td>
+                    <% if (m.winner_score !== null && m.loser_score !== null) { %>
+                        <%= m.result === 'win' ? m.winner_score + '-' + m.loser_score : m.loser_score + '-' + m.winner_score %>
+                    <% } else { %>
+                        —
+                    <% } %>
+                </td>
+                <td><%= m.round_text || '—' %></td>
+                <td><%= m.tournament_name %> (<%= m.season_name %>)</td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+<% } %>
