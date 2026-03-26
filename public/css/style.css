@@ -404,7 +404,7 @@ tbody tr:hover {
     padding: 80px 30px;
     text-align: center;
     background-size: cover;
-    background-position: center top;
+    background-position: center center;
     background-repeat: no-repeat;
     background-color: var(--surface);
     overflow: hidden;
