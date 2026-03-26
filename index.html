@@ -497,7 +497,7 @@
                     
                     currentSeasonName = firstCell;
                     weekData = [];
-                    if (!currentSeason) currentSeason = currentSeasonName; // Set the first season as current
+                    currentSeason = currentSeasonName; // Always update so the last (most recent) season wins
                 } 
                 // Check if this is a week header
                 else if (firstCell.toLowerCase().startsWith('week')) {
