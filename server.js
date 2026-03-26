@@ -2,6 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+
+// Log DB connection target (redact password)
+const dbUrl = process.env.DATABASE_URL || 'NOT SET';
+console.log('DATABASE_URL host:', dbUrl.replace(/\/\/.*@/, '//***@'));
+
 const pool = require('./db/pool');
 
 const indexRoutes = require('./routes/index');
