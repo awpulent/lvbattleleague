@@ -34,8 +34,45 @@ const CHARACTER_ICONS = {
     "Alex": "https://images.start.gg/images/character/2946/image-4c3259ffbe946beba5236a7aea7e56f7.png"
 };
 
+// Character name to banner image (locally hosted screenshots from Capcom)
+const CHARACTER_BANNERS = {
+    "Ryu": "/img/characters/ryu.jpg",
+    "Ken": "/img/characters/ken.jpg",
+    "Chun-Li": "/img/characters/chunli.jpg",
+    "Luke": "/img/characters/luke.jpg",
+    "Jamie": "/img/characters/jamie.jpg",
+    "Kimberly": "/img/characters/kimberly.jpg",
+    "Guile": "/img/characters/guile.jpg",
+    "Juri": "/img/characters/juri.jpg",
+    "JP": "/img/characters/jp.jpg",
+    "Manon": "/img/characters/manon.jpg",
+    "Marisa": "/img/characters/marisa.jpg",
+    "Lily": "/img/characters/lily.jpg",
+    "Dee Jay": "/img/characters/deejay.jpg",
+    "Cammy": "/img/characters/cammy.jpg",
+    "Zangief": "/img/characters/zangief.jpg",
+    "Dhalsim": "/img/characters/dhalsim.jpg",
+    "E. Honda": "/img/characters/ehonda.jpg",
+    "Blanka": "/img/characters/blanka.jpg",
+    "Rashid": "/img/characters/rashid.jpg",
+    "A.K.I.": "/img/characters/aki.jpg",
+    "Ed": "/img/characters/ed.jpg",
+    "Akuma": "/img/characters/gouki_akuma.jpg",
+    "M. Bison": "/img/characters/vega_mbison.jpg",
+    "Terry": "/img/characters/terry.jpg",
+    "Mai": "/img/characters/mai.jpg",
+    "Elena": "/img/characters/elena.jpg",
+    "Sagat": "/img/characters/sagat.jpg",
+    "C. Viper": "/img/characters/cviper.jpg",
+    "Alex": "/img/characters/alex.jpg"
+};
+
 function getCharacterIcon(name) {
     return CHARACTER_ICONS[name] || null;
 }
 
-module.exports = { CHARACTER_ICONS, getCharacterIcon };
+function getCharacterBanner(name) {
+    return CHARACTER_BANNERS[name] || null;
+}
+
+module.exports = { CHARACTER_ICONS, CHARACTER_BANNERS, getCharacterIcon, getCharacterBanner };

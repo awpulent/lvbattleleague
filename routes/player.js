@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getPlayer, getOverallRecord, getHeadToHead, getCharacterUsage, getMatchHistory, getSeasonPlacements } = require('../queries/players');
-const { CHARACTER_ICONS } = require('../sync/characters');
+const { CHARACTER_ICONS, getCharacterBanner } = require('../sync/characters');
 
 router.get('/:id', async (req, res) => {
     try {
@@ -24,6 +24,10 @@ router.get('/:id', async (req, res) => {
             ? ((parseInt(record.wins) / (parseInt(record.wins) + parseInt(record.losses))) * 100).toFixed(1)
             : '0.0';
 
+        // Get banner from most played character
+        const topChar = characters.length > 0 ? characters[0].character : null;
+        const bannerUrl = topChar ? getCharacterBanner(topChar) : null;
+
         res.render('player', {
             player,
             record,
@@ -32,7 +36,8 @@ router.get('/:id', async (req, res) => {
             characters,
             matches,
             seasonHistory,
-            charIcons: CHARACTER_ICONS
+            charIcons: CHARACTER_ICONS,
+            bannerUrl
         });
     } catch (err) {
         console.error('Player page error:', err);

@@ -3,14 +3,17 @@
 
 <a href="/" class="back-link">&larr; Back to Standings</a>
 
-<div class="player-header">
-    <h1><%= player.display_name %></h1>
-    <% if (parseInt(record.wins) + parseInt(record.losses) > 0) { %>
-    <p class="player-record">
-        <span class="wins"><%= record.wins %>W</span> — <span class="losses"><%= record.losses %>L</span>
-        &nbsp;&nbsp;<span class="winrate">(<%= winrate %>%)</span>
-    </p>
-    <% } %>
+<div class="player-banner" <% if (bannerUrl) { %>style="background-image: url('<%= bannerUrl %>')"<% } %>>
+    <div class="player-banner-overlay"></div>
+    <div class="player-banner-content">
+        <h1><%= player.display_name %></h1>
+        <% if (parseInt(record.wins) + parseInt(record.losses) > 0) { %>
+        <p class="player-record">
+            <span class="wins"><%= record.wins %>W</span> — <span class="losses"><%= record.losses %>L</span>
+            &nbsp;&nbsp;<span class="winrate">(<%= winrate %>%)</span>
+        </p>
+        <% } %>
+    </div>
 </div>
 
 <% if (characters.length > 0) { %>
