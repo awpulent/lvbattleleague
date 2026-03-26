@@ -28,6 +28,29 @@ router.get('/', adminAuth, async (req, res) => {
     }
 });
 
+// Clear a season's tournament data (placements, sets, games, tournaments) so it can be re-synced
+router.post('/clear-season', adminAuth, async (req, res) => {
+    try {
+        const { seasonId } = req.body;
+        if (!seasonId) return res.status(400).json({ error: 'seasonId required' });
+
+        const tournIds = await pool.query('SELECT id FROM tournaments WHERE season_id = $1', [parseInt(seasonId)]);
+        const ids = tournIds.rows.map(r => r.id);
+
+        if (ids.length) {
+            await pool.query('DELETE FROM games WHERE set_id IN (SELECT id FROM sets WHERE tournament_id = ANY($1))', [ids]);
+            await pool.query('DELETE FROM sets WHERE tournament_id = ANY($1)', [ids]);
+            await pool.query('DELETE FROM placements WHERE tournament_id = ANY($1)', [ids]);
+            await pool.query('DELETE FROM tournaments WHERE season_id = $1', [parseInt(seasonId)]);
+        }
+
+        res.json({ success: true, tournamentsCleared: ids.length });
+    } catch (err) {
+        console.error('Clear season error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Sync trigger
 router.post('/sync', adminAuth, async (req, res) => {
     try {
