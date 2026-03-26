@@ -57,6 +57,99 @@ router.post('/sponsors', adminAuth, upload.single('logo'), async (req, res) => {
     }
 });
 
+// One-time migration from Google Sheets
+router.post('/migrate', adminAuth, async (req, res) => {
+    try {
+        // Check if data already exists
+        const check = await pool.query('SELECT COUNT(*) FROM seasons');
+        if (parseInt(check.rows[0].count) > 0) {
+            return res.json({ message: 'Data already exists. Skipping migration.' });
+        }
+
+        const SHEET_ID = '1OiI_pznUCPgfcgoMpd5HhTCTqx4QR30RhtZljftCiWA';
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Sheet fetch failed: ${response.status}`);
+        const text = await response.text();
+
+        // Parse CSV
+        const rows = text.split('\n').map(line => {
+            const cols = []; let current = ''; let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { cols.push(current.trim()); current = ''; }
+                else current += char;
+            }
+            cols.push(current.trim());
+            return cols;
+        });
+
+        // Parse into seasons
+        const seasons = []; let currentSeasonName = ''; let weekData = [];
+        rows.forEach(cols => {
+            if (!cols || !cols.length || !cols[0]) return;
+            const firstCell = cols[0].toString().trim();
+            if (firstCell.toLowerCase().startsWith('season')) {
+                if (currentSeasonName && weekData.length > 0) seasons.push({ name: currentSeasonName, entries: weekData });
+                currentSeasonName = firstCell; weekData = [];
+            } else if (firstCell.toLowerCase().startsWith('week')) {
+                // skip header
+            } else if (cols.length >= 3 && firstCell) {
+                weekData.push({ player: firstCell, placement: parseInt(cols[1]) || 0, points: parseFloat(cols[2]) || 0, week: (cols[3] || 'Week 1').trim() });
+            }
+        });
+        if (currentSeasonName && weekData.length > 0) seasons.push({ name: currentSeasonName, entries: weekData });
+
+        // Insert into DB
+        for (let si = 0; si < seasons.length; si++) {
+            const season = seasons[si];
+            const isActive = si === seasons.length - 1;
+            const seasonResult = await pool.query(
+                'INSERT INTO seasons (name, is_active) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET is_active = $2 RETURNING id',
+                [season.name, isActive]
+            );
+            const seasonId = seasonResult.rows[0].id;
+
+            const weekSet = new Set(season.entries.map(e => e.week));
+            const weekNames = Array.from(weekSet).sort();
+            const weekIdMap = {};
+
+            for (let wi = 0; wi < weekNames.length; wi++) {
+                const weekName = weekNames[wi];
+                const tournResult = await pool.query(
+                    'INSERT INTO tournaments (season_id, name, week_number) VALUES ($1, $2, $3) RETURNING id',
+                    [seasonId, weekName, wi + 1]
+                );
+                weekIdMap[weekName] = tournResult.rows[0].id;
+            }
+
+            for (const entry of season.entries) {
+                let playerResult = await pool.query('SELECT id FROM players WHERE display_name = $1', [entry.player]);
+                let playerId;
+                if (playerResult.rows.length) {
+                    playerId = playerResult.rows[0].id;
+                } else {
+                    const insert = await pool.query('INSERT INTO players (display_name) VALUES ($1) RETURNING id', [entry.player]);
+                    playerId = insert.rows[0].id;
+                }
+                const tournamentId = weekIdMap[entry.week];
+                if (tournamentId) {
+                    await pool.query(
+                        'INSERT INTO placements (tournament_id, player_id, placement, points) VALUES ($1, $2, $3, $4) ON CONFLICT (tournament_id, player_id) DO UPDATE SET placement = EXCLUDED.placement, points = EXCLUDED.points',
+                        [tournamentId, playerId, entry.placement, entry.points]
+                    );
+                }
+            }
+        }
+
+        res.json({ success: true, seasons: seasons.length, message: 'Migration complete' });
+    } catch (err) {
+        console.error('Migration error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Delete sponsor
 router.post('/sponsors/:id/delete', adminAuth, async (req, res) => {
     try {
