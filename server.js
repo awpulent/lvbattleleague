@@ -12,6 +12,7 @@ const pool = require('./db/pool');
 const indexRoutes = require('./routes/index');
 const playerRoutes = require('./routes/player');
 const adminRoutes = require('./routes/admin');
+const apiRoutes = require('./routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,14 @@ const PORT = process.env.PORT || 3000;
 // View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// CORS for overlay API (local HTML files use null origin)
+app.use('/api', (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+});
 
 // Middleware
 app.use(express.json());
@@ -29,6 +38,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRoutes);
 app.use('/player', playerRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api', apiRoutes);
 
 // Auto-init: create tables if they don't exist, then start
 async function start() {
