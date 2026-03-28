@@ -24,7 +24,7 @@ router.get('/players/search', async (req, res) => {
             FROM players p
             LEFT JOIN player_aliases pa ON pa.player_id = p.id
             WHERE p.display_name ILIKE $1 OR pa.alias ILIKE $1
-            ORDER BY p.startgg_id IS NOT NULL DESC, p.display_name
+            ORDER BY (p.startgg_id IS NOT NULL) DESC, p.display_name
             LIMIT 10
         `, [`%${name}%`]);
 
