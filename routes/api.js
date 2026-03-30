@@ -20,10 +20,11 @@ router.get('/players/search', async (req, res) => {
 
         // Prefer players with start.gg IDs (real synced data) over historical shells
         const { rows } = await pool.query(`
-            SELECT DISTINCT p.id, p.display_name
+            SELECT p.id, p.display_name
             FROM players p
             LEFT JOIN player_aliases pa ON pa.player_id = p.id
             WHERE p.display_name ILIKE $1 OR pa.alias ILIKE $1
+            GROUP BY p.id, p.display_name, p.startgg_id
             ORDER BY (p.startgg_id IS NOT NULL) DESC, p.display_name
             LIMIT 10
         `, [`%${name}%`]);
