@@ -35,8 +35,8 @@
             height: 45px;
         }
 
-        /* P1: score at left edge, name to the right of score */
-        #leftBGWrapper { left: 395px; }
+        /* P1: score at left edge, name connects to round box */
+        #leftBGWrapper { left: 586px; }
 
         #p1ScoreBG {
             position: absolute;
@@ -52,7 +52,7 @@
         #p1PlayerBG {
             position: absolute;
             left: 55px;
-            width: 375px;
+            width: 193px;
             height: 45px;
             background: rgba(0, 0, 0, 0.75);
             border: 1px solid #c40a18;
@@ -60,13 +60,13 @@
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
-        /* P2: name on left, score at right edge */
-        #rightBGWrapper { left: 1090px; }
+        /* P2: name connects to round box, score at right edge */
+        #rightBGWrapper { left: 1086px; }
 
         #p2PlayerBG {
             position: absolute;
             left: 0;
-            width: 375px;
+            width: 193px;
             height: 45px;
             background: rgba(0, 0, 0, 0.75);
             border: 1px solid #c40a18;
@@ -76,7 +76,7 @@
 
         #p2ScoreBG {
             position: absolute;
-            left: 381px;
+            left: 199px;
             width: 49px;
             height: 45px;
             background: #c40a18;
@@ -85,15 +85,14 @@
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
-        /* Round display */
+        /* Round display — connects between player boxes */
         #roundBG {
             position: absolute;
             left: 840px;
             width: 240px;
-            height: 36px;
+            height: 45px;
             background: rgba(0, 0, 0, 0.75);
             border: 1px solid #c40a18;
-            transform: perspective(100px) rotateX(-18deg);
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
@@ -111,7 +110,7 @@
         #leftWrapper {
             position: absolute;
             top: 0;
-            left: 395px;
+            left: 586px;
             height: 45px;
             display: flex;
             align-items: center;
@@ -122,7 +121,7 @@
         #rightWrapper {
             position: absolute;
             top: 0;
-            left: 1090px;
+            left: 1086px;
             height: 45px;
             display: flex;
             align-items: center;
@@ -146,8 +145,9 @@
             display: flex;
             align-items: center;
             height: 45px;
-            padding: 0 20px;
-            width: 375px;
+            padding: 0 15px;
+            width: 193px;
+            overflow: hidden;
         }
 
         #p1Wrapper { justify-content: flex-start; margin-left: 6px; }
@@ -181,7 +181,7 @@
             left: 840px;
             top: 0;
             width: 240px;
-            height: 36px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
