@@ -16,9 +16,8 @@
             text-transform: uppercase;
         }
 
-        /* ===== SCOREBOARD BAR (matches fgc-scoreboard style) ===== */
+        /* ===== SCOREBOARD BAR ===== */
 
-        /* Background layer */
         #scoreboardBG {
             position: absolute;
             top: 0;
@@ -27,42 +26,69 @@
             height: 60px;
         }
 
+        /* P1 side: score box | name box  (score on left) */
+        /* P2 side: name box | score box  (score on right) */
+
         .BGWrapper {
             position: absolute;
             top: 0;
             height: 45px;
         }
 
-        #leftBGWrapper { left: 456px; }
-        #rightBGWrapper { left: 1116px; }
+        /* P1: score at left edge, name to the right of score */
+        #leftBGWrapper { left: 395px; }
 
-        .playerBG {
+        #p1ScoreBG {
             position: absolute;
+            left: 0;
+            width: 49px;
+            height: 45px;
+            background: #c40a18;
+            border: 1px solid black;
+            transform: skewX(20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #p1PlayerBG {
+            position: absolute;
+            left: 55px;
             width: 375px;
             height: 45px;
             background: rgba(0, 0, 0, 0.75);
             border: 1px solid #c40a18;
+            transform: skewX(20deg);
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
-        #p1PlayerBG { transform: skewX(20deg); }
-        #p2PlayerBG { transform: skewX(-20deg); }
+        /* P2: name on left, score at right edge */
+        #rightBGWrapper { left: 1090px; }
 
-        .scoreBG {
+        #p2PlayerBG {
             position: absolute;
+            left: 0;
+            width: 375px;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #c40a18;
+            transform: skewX(-20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #p2ScoreBG {
+            position: absolute;
+            left: 381px;
             width: 49px;
-            height: calc(100% - 4px);
+            height: 45px;
             background: #c40a18;
             border: 1px solid black;
+            transform: skewX(-20deg);
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
-        #p1ScoreBG { left: 0; transform: skewX(20deg); }
-        #p2ScoreBG { left: 375px; transform: skewX(-20deg); }
-
+        /* Round display */
         #roundBG {
             position: absolute;
-            left: 856px;
+            left: 840px;
             width: 240px;
             height: 36px;
             background: rgba(0, 0, 0, 0.75);
@@ -71,50 +97,61 @@
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
-        /* Foreground content layer */
+        /* Foreground content — text sits on top of backgrounds */
         #scoreboard {
             position: absolute;
             top: 0;
             left: 0;
             width: 1920px;
             height: 60px;
+            z-index: 2;
         }
 
-        #leftWrapper, #rightWrapper {
+        /* P1 content: score then name, left to right */
+        #leftWrapper {
             position: absolute;
             top: 0;
+            left: 395px;
             height: 45px;
             display: flex;
             align-items: center;
+            flex-direction: row;
         }
 
-        #leftWrapper { left: 400px; flex-direction: row; }
-        #rightWrapper { left: 1120px; flex-direction: row-reverse; }
+        /* P2 content: name then score, left to right */
+        #rightWrapper {
+            position: absolute;
+            top: 0;
+            left: 1090px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+        }
 
         .scores {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 41px;
-            height: 41px;
+            width: 49px;
+            height: 45px;
             font-family: 'Bebas Neue', sans-serif;
             font-size: 34px;
             color: white;
             -webkit-text-stroke: 1px black;
             text-shadow: 2px 2px 3px DimGray;
-            z-index: 2;
         }
 
         .wrappers {
             display: flex;
             align-items: center;
             height: 45px;
-            padding: 0 15px;
-            min-width: 340px;
+            padding: 0 20px;
+            width: 375px;
         }
 
-        #leftWrapper .wrappers { justify-content: flex-start; }
-        #rightWrapper .wrappers { justify-content: flex-end; }
+        #p1Wrapper { justify-content: flex-start; margin-left: 6px; }
+        #p2Wrapper { justify-content: flex-end; }
 
         .teams {
             font-family: 'Barlow', sans-serif;
@@ -125,9 +162,10 @@
             margin-right: 8px;
         }
 
-        #rightWrapper .teams {
+        #p2Wrapper .teams {
             margin-right: 0;
             margin-left: 8px;
+            order: 2;
         }
 
         .names {
@@ -140,7 +178,7 @@
 
         #rdWrapper {
             position: absolute;
-            left: 856px;
+            left: 840px;
             top: 0;
             width: 240px;
             height: 36px;
@@ -163,50 +201,12 @@
             animation: slidedown 0.26s ease-out forwards;
         }
 
-        .player1-animation {
-            animation: player1slidein 0.26s ease-out forwards;
-        }
-
-        .player2-animation {
-            animation: player2slidein 0.26s ease-out forwards;
-        }
-
-        .p1s-animation {
-            animation: p1score 0.26s ease-out 0.2s forwards;
-            opacity: 0;
-        }
-
-        .p2s-animation {
-            animation: p2score 0.26s ease-out 0.2s forwards;
-            opacity: 0;
-        }
-
         @keyframes slidedown {
             from { top: -40px; opacity: 0; }
             to { top: 0px; opacity: 1; }
         }
 
-        @keyframes player1slidein {
-            from { width: 90px; opacity: 0; }
-            to { width: 375px; opacity: 1; }
-        }
-
-        @keyframes player2slidein {
-            from { width: 90px; opacity: 0; }
-            to { width: 375px; opacity: 1; }
-        }
-
-        @keyframes p1score {
-            from { left: 375px; opacity: 0; }
-            to { left: 0px; opacity: 1; }
-        }
-
-        @keyframes p2score {
-            from { left: 0px; opacity: 0; }
-            to { left: 375px; opacity: 1; }
-        }
-
-        /* ===== PLAYER STAT CARDS (LVBL addition) ===== */
+        /* ===== PLAYER STAT CARDS ===== */
 
         .stat-card {
             position: absolute;
@@ -255,12 +255,12 @@
     <div id="scoreboardBG">
         <div id="roundBG" class="slidedown"></div>
         <div id="leftBGWrapper" class="BGWrapper">
-            <div id="p1ScoreBG" class="scoreBG p1s-animation"></div>
-            <div id="p1PlayerBG" class="playerBG player1-animation"></div>
+            <div id="p1ScoreBG"></div>
+            <div id="p1PlayerBG"></div>
         </div>
         <div id="rightBGWrapper" class="BGWrapper">
-            <div id="p2ScoreBG" class="scoreBG p2s-animation"></div>
-            <div id="p2PlayerBG" class="playerBG player2-animation"></div>
+            <div id="p2PlayerBG"></div>
+            <div id="p2ScoreBG"></div>
         </div>
     </div>
 
@@ -274,35 +274,40 @@
             </span>
         </div>
         <div id="rightWrapper">
-            <span id="p2Score" class="scores">0</span>
             <span id="p2Wrapper" class="wrappers">
                 <span id="p2Team" class="teams"></span>
                 <span id="p2Name" class="names">Player 2</span>
             </span>
+            <span id="p2Score" class="scores">0</span>
         </div>
         <div id="rdWrapper">
             <span id="round">-</span>
         </div>
     </div>
 
-    <!-- Player stat cards (LVBL) -->
+    <!-- Player stat cards -->
     <div class="stat-card p1-stats" id="p1Stats"></div>
     <div class="stat-card p2-stats" id="p2Stats"></div>
 
     <script src="config.js"></script>
     <script>
-        // State
+        // State — track player names and cached stats
         let lastP1Name = '';
         let lastP2Name = '';
-        let lastData = {};
+        let cachedP1Stats = null;
+        let cachedP2Stats = null;
 
         // Fetch from LVBL API
         async function apiFetch(endpoint) {
-            const res = await fetch(`${LVBL_CONFIG.apiUrl}/api${endpoint}`, {
-                headers: { 'Authorization': `Bearer ${LVBL_CONFIG.apiKey}` }
-            });
-            if (!res.ok) return null;
-            return res.json();
+            try {
+                const res = await fetch(`${LVBL_CONFIG.apiUrl}/api${endpoint}`, {
+                    headers: { 'Authorization': `Bearer ${LVBL_CONFIG.apiKey}` }
+                });
+                if (!res.ok) return null;
+                return res.json();
+            } catch (e) {
+                return null;
+            }
         }
 
         // Search for a player by name
@@ -311,11 +316,6 @@
             const results = await apiFetch(`/players/search?name=${encodeURIComponent(name)}`);
             if (!results || !results.length) return null;
             return results.find(r => r.display_name.toLowerCase() === name.toLowerCase()) || results[0];
-        }
-
-        // Get player stats
-        async function getPlayerStats(playerId) {
-            return apiFetch(`/players/${playerId}/stats`);
         }
 
         // Render stat card
@@ -341,27 +341,17 @@
                 findPlayer(p2Name)
             ]);
 
-            const [p1Data, p2Data] = await Promise.all([
-                p1Result ? getPlayerStats(p1Result.id) : null,
-                p2Result ? getPlayerStats(p2Result.id) : null
+            const [p1Stats, p2Stats] = await Promise.all([
+                p1Result ? apiFetch(`/players/${p1Result.id}/stats`) : null,
+                p2Result ? apiFetch(`/players/${p2Result.id}/stats`) : null
             ]);
 
-            renderStatCard('p1Stats', p1Data);
-            renderStatCard('p2Stats', p2Data);
-        }
+            // Cache the results so they persist
+            if (p1Stats) cachedP1Stats = p1Stats;
+            if (p2Stats) cachedP2Stats = p2Stats;
 
-        // Update scoreboard display from StreamControl data
-        function updateScoreboard(data) {
-            const p1Name = (data.p1Name || '').trim();
-            const p2Name = (data.p2Name || '').trim();
-
-            document.getElementById('p1Name').textContent = p1Name || 'Player 1';
-            document.getElementById('p2Name').textContent = p2Name || 'Player 2';
-            document.getElementById('p1Score').textContent = data.p1Score || '0';
-            document.getElementById('p2Score').textContent = data.p2Score || '0';
-            document.getElementById('p1Team').textContent = data.p1Team || '';
-            document.getElementById('p2Team').textContent = data.p2Team || '';
-            document.getElementById('round').textContent = data.round || '-';
+            renderStatCard('p1Stats', cachedP1Stats);
+            renderStatCard('p2Stats', cachedP2Stats);
         }
 
         // Poll StreamControl JSON
@@ -371,25 +361,34 @@
                 if (!res.ok) return;
                 const data = await res.json();
 
-                // Update scoreboard display
-                updateScoreboard(data);
-
                 const p1Name = (data.p1Name || '').trim();
                 const p2Name = (data.p2Name || '').trim();
 
-                // If players changed, fetch new stats
+                // Update scoreboard text
+                document.getElementById('p1Name').textContent = p1Name || 'Player 1';
+                document.getElementById('p2Name').textContent = p2Name || 'Player 2';
+                document.getElementById('p1Score').textContent = data.p1Score || '0';
+                document.getElementById('p2Score').textContent = data.p2Score || '0';
+                document.getElementById('p1Team').textContent = data.p1Team || '';
+                document.getElementById('p2Team').textContent = data.p2Team || '';
+                document.getElementById('round').textContent = data.round || '-';
+
+                // Only fetch stats when players change
                 if (p1Name !== lastP1Name || p2Name !== lastP2Name) {
                     lastP1Name = p1Name;
                     lastP2Name = p2Name;
+
                     if (p1Name && p2Name) {
                         await updateStats(p1Name, p2Name);
                     } else {
+                        cachedP1Stats = null;
+                        cachedP2Stats = null;
                         document.getElementById('p1Stats').classList.remove('visible');
                         document.getElementById('p2Stats').classList.remove('visible');
                     }
                 }
             } catch (e) {
-                // streamcontrol.json not found or not ready
+                // streamcontrol.json not found — keep showing cached data
             }
         }
 
