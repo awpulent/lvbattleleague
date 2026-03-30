@@ -35,23 +35,12 @@
             height: 45px;
         }
 
-        /* P1: score at left edge, name to the right of score — shifted 182px outward */
-        #leftBGWrapper { left: 213px; }
-
-        #p1ScoreBG {
-            position: absolute;
-            left: 0;
-            width: 49px;
-            height: 45px;
-            background: #c40a18;
-            border: 1px solid black;
-            transform: skewX(20deg);
-            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
-        }
+        /* P1: name box then score on the inside (toward center) */
+        #leftBGWrapper { left: 263px; }
 
         #p1PlayerBG {
             position: absolute;
-            left: 55px;
+            left: 0;
             width: 375px;
             height: 45px;
             background: rgba(0, 0, 0, 0.75);
@@ -60,27 +49,38 @@
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
 
-        /* P2: name on left, score at right edge — shifted 182px outward */
-        #rightBGWrapper { left: 1272px; }
-
-        #p2PlayerBG {
-            position: absolute;
-            left: 0;
-            width: 375px;
-            height: 45px;
-            background: rgba(0, 0, 0, 0.75);
-            border: 1px solid #c40a18;
-            transform: skewX(-20deg);
-            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
-        }
-
-        #p2ScoreBG {
+        #p1ScoreBG {
             position: absolute;
             left: 381px;
             width: 49px;
             height: 45px;
             background: #c40a18;
             border: 1px solid black;
+            transform: skewX(20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        /* P2: score on the inside (toward center) then name box */
+        #rightBGWrapper { left: 1222px; }
+
+        #p2ScoreBG {
+            position: absolute;
+            left: 0;
+            width: 49px;
+            height: 45px;
+            background: #c40a18;
+            border: 1px solid black;
+            transform: skewX(-20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #p2PlayerBG {
+            position: absolute;
+            left: 55px;
+            width: 375px;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #c40a18;
             transform: skewX(-20deg);
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
         }
@@ -107,22 +107,22 @@
             z-index: 2;
         }
 
-        /* P1 content: score then name, left to right */
+        /* P1 content: name then score (score on inside) */
         #leftWrapper {
             position: absolute;
             top: 0;
-            left: 213px;
+            left: 263px;
             height: 45px;
             display: flex;
             align-items: center;
             flex-direction: row;
         }
 
-        /* P2 content: name then score, left to right */
+        /* P2 content: score then name (score on inside) */
         #rightWrapper {
             position: absolute;
             top: 0;
-            left: 1272px;
+            left: 1222px;
             height: 45px;
             display: flex;
             align-items: center;
@@ -150,8 +150,8 @@
             width: 375px;
         }
 
-        #p1Wrapper { justify-content: flex-start; margin-left: 6px; }
-        #p2Wrapper { justify-content: flex-end; }
+        #p1Wrapper { justify-content: flex-start; }
+        #p2Wrapper { justify-content: flex-end; margin-left: 6px; }
 
         .teams {
             font-family: 'Barlow', sans-serif;
@@ -267,18 +267,18 @@
     <!-- Scoreboard content layer -->
     <div id="scoreboard">
         <div id="leftWrapper">
-            <span id="p1Score" class="scores">0</span>
             <span id="p1Wrapper" class="wrappers">
                 <span id="p1Team" class="teams"></span>
                 <span id="p1Name" class="names">Player 1</span>
             </span>
+            <span id="p1Score" class="scores">0</span>
         </div>
         <div id="rightWrapper">
+            <span id="p2Score" class="scores">0</span>
             <span id="p2Wrapper" class="wrappers">
                 <span id="p2Team" class="teams"></span>
                 <span id="p2Name" class="names">Player 2</span>
             </span>
-            <span id="p2Score" class="scores">0</span>
         </div>
         <div id="rdWrapper">
             <span id="round">-</span>
