@@ -15,138 +15,6 @@
             overflow: hidden;
         }
 
-        /* Scoreboard bar — sits at top of screen */
-        .scoreboard {
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: stretch;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .scoreboard.visible { opacity: 1; }
-
-        /* Player panels */
-        .player-panel {
-            display: flex;
-            align-items: center;
-            padding: 8px 20px;
-            min-width: 280px;
-            background: rgba(10, 10, 15, 0.9);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-
-        .p1-panel {
-            border-right: none;
-            flex-direction: row;
-        }
-
-        .p2-panel {
-            border-left: none;
-            flex-direction: row-reverse;
-        }
-
-        .player-name-display {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.6rem;
-            color: #E8E8E8;
-            letter-spacing: 0.05em;
-            white-space: nowrap;
-        }
-
-        .player-chars {
-            display: flex;
-            gap: 4px;
-            margin: 0 12px;
-        }
-
-        .p2-panel .player-chars {
-            flex-direction: row-reverse;
-        }
-
-        .player-char-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 3px;
-        }
-
-        /* Score boxes */
-        .score-box {
-            width: 50px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 2rem;
-            color: #FFD700;
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-
-        .p1-score { border-right: none; }
-        .p2-score { border-left: none; }
-
-        /* Center divider with round info */
-        .center-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 15px;
-            background: rgba(255, 215, 0, 0.15);
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            min-width: 80px;
-        }
-
-        .round-display {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 0.9rem;
-            color: #FFD700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
-        /* H2H popup — shows below scoreboard when available */
-        .h2h-bar {
-            position: absolute;
-            top: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 6px 20px;
-            background: rgba(10, 10, 15, 0.85);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .h2h-bar.visible { opacity: 1; }
-
-        .h2h-label {
-            font-size: 0.75rem;
-            color: rgba(255, 215, 0, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
-        }
-
-        .h2h-record {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.2rem;
-            color: #00E5FF;
-            letter-spacing: 0.05em;
-        }
-
-        .h2h-record .p1-wins { color: #4CAF50; }
-        .h2h-record .p2-wins { color: #FF1744; }
-
         /* Player stat cards — bottom corners */
         .stat-card {
             position: absolute;
@@ -189,29 +57,6 @@
     </style>
 </head>
 <body>
-    <!-- Scoreboard bar -->
-    <div class="scoreboard" id="scoreboard">
-        <div class="player-panel p1-panel">
-            <span class="player-name-display" id="p1Name">Player 1</span>
-            <div class="player-chars" id="p1Chars"></div>
-        </div>
-        <div class="score-box p1-score" id="p1Score">0</div>
-        <div class="center-info">
-            <span class="round-display" id="roundDisplay">-</span>
-        </div>
-        <div class="score-box p2-score" id="p2Score">0</div>
-        <div class="player-panel p2-panel">
-            <span class="player-name-display" id="p2Name">Player 2</span>
-            <div class="player-chars" id="p2Chars"></div>
-        </div>
-    </div>
-
-    <!-- H2H record bar -->
-    <div class="h2h-bar" id="h2hBar">
-        <span class="h2h-label">Head to Head</span>
-        <span class="h2h-record" id="h2hRecord"></span>
-    </div>
-
     <!-- Player stat cards -->
     <div class="stat-card p1-stats" id="p1Stats"></div>
     <div class="stat-card p2-stats" id="p2Stats"></div>
@@ -221,10 +66,6 @@
         // State
         let lastP1Name = '';
         let lastP2Name = '';
-        let p1Data = null;
-        let p2Data = null;
-        let h2hData = null;
-        let statsVisible = false;
 
         // Fetch from LVBL API
         async function apiFetch(endpoint) {
@@ -240,30 +81,12 @@
             if (!name || name.length < 2) return null;
             const results = await apiFetch(`/players/search?name=${encodeURIComponent(name)}`);
             if (!results || !results.length) return null;
-            // Exact match first, then first result
             return results.find(r => r.display_name.toLowerCase() === name.toLowerCase()) || results[0];
         }
 
         // Get player stats
         async function getPlayerStats(playerId) {
             return apiFetch(`/players/${playerId}/stats`);
-        }
-
-        // Get H2H between two players
-        async function getH2H(id1, id2) {
-            return apiFetch(`/h2h/${id1}/${id2}`);
-        }
-
-        // Render character icons
-        function renderChars(containerId, characters) {
-            const el = document.getElementById(containerId);
-            if (!characters || !characters.length) {
-                el.innerHTML = '';
-                return;
-            }
-            el.innerHTML = characters.slice(0, 2).map(c =>
-                c.icon ? `<img src="${c.icon}" alt="${c.name}" class="player-char-icon" title="${c.name}">` : ''
-            ).join('');
         }
 
         // Render stat card
@@ -282,52 +105,20 @@
             el.classList.add('visible');
         }
 
-        // Render H2H bar
-        function renderH2H(data) {
-            const el = document.getElementById('h2hBar');
-            const record = document.getElementById('h2hRecord');
-            if (!data || (data.p1.wins === 0 && data.p2.wins === 0)) {
-                el.classList.remove('visible');
-                return;
-            }
-            record.innerHTML = `<span class="p1-wins">${data.p1.wins}</span> - <span class="p2-wins">${data.p2.wins}</span>`;
-            el.classList.add('visible');
-        }
-
         // Update stats when players change
         async function updateStats(p1Name, p2Name) {
-            // Find players in DB
             const [p1Result, p2Result] = await Promise.all([
                 findPlayer(p1Name),
                 findPlayer(p2Name)
             ]);
 
-            // Fetch stats
-            if (p1Result) {
-                p1Data = await getPlayerStats(p1Result.id);
-            } else {
-                p1Data = null;
-            }
+            const [p1Data, p2Data] = await Promise.all([
+                p1Result ? getPlayerStats(p1Result.id) : null,
+                p2Result ? getPlayerStats(p2Result.id) : null
+            ]);
 
-            if (p2Result) {
-                p2Data = await getPlayerStats(p2Result.id);
-            } else {
-                p2Data = null;
-            }
-
-            // Fetch H2H
-            if (p1Result && p2Result) {
-                h2hData = await getH2H(p1Result.id, p2Result.id);
-            } else {
-                h2hData = null;
-            }
-
-            // Render
-            renderChars('p1Chars', p1Data?.characters);
-            renderChars('p2Chars', p2Data?.characters);
             renderStatCard('p1Stats', p1Data);
             renderStatCard('p2Stats', p2Data);
-            renderH2H(h2hData);
         }
 
         // Poll StreamControl JSON
@@ -339,22 +130,6 @@
 
                 const p1Name = (data.p1Name || '').trim();
                 const p2Name = (data.p2Name || '').trim();
-                const p1Score = data.p1Score || '0';
-                const p2Score = data.p2Score || '0';
-                const round = data.round || '';
-
-                // Update scoreboard display
-                document.getElementById('p1Name').textContent = p1Name || 'Player 1';
-                document.getElementById('p2Name').textContent = p2Name || 'Player 2';
-                document.getElementById('p1Score').textContent = p1Score;
-                document.getElementById('p2Score').textContent = p2Score;
-                document.getElementById('roundDisplay').textContent = round || '-';
-
-                // Show scoreboard if we have names
-                const scoreboard = document.getElementById('scoreboard');
-                if (p1Name || p2Name) {
-                    scoreboard.classList.add('visible');
-                }
 
                 // If players changed, fetch new stats
                 if (p1Name !== lastP1Name || p2Name !== lastP2Name) {
@@ -363,16 +138,12 @@
                     if (p1Name && p2Name) {
                         await updateStats(p1Name, p2Name);
                     } else {
-                        // Clear stats if players are missing
-                        document.getElementById('p1Chars').innerHTML = '';
-                        document.getElementById('p2Chars').innerHTML = '';
                         document.getElementById('p1Stats').classList.remove('visible');
                         document.getElementById('p2Stats').classList.remove('visible');
-                        document.getElementById('h2hBar').classList.remove('visible');
                     }
                 }
             } catch (e) {
-                // streamcontrol.json not found or not ready — silent fail
+                // streamcontrol.json not found or not ready
             }
         }
 
