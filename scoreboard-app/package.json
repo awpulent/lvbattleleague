@@ -2,16 +2,17 @@
   "name": "lvbl-scoreboard",
   "version": "1.0.0",
   "description": "LV Battle League Stream Scoreboard",
+  "author": "LV Battle League",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win portable"
+    "build": "npx electron-builder --win portable"
   },
   "dependencies": {
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "electron": "^35.0.0",
+    "electron": "35.0.0",
     "electron-builder": "^26.0.0"
   },
   "build": {
