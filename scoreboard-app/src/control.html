@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LVBL Scoreboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a24;
+            color: #e8e8e8;
+            padding: 20px;
+            user-select: none;
+        }
+
+        /* OBS URL bar */
+        .obs-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 8px 10px;
+            background: #0a0a0f;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        .obs-bar label {
+            font-size: 0.7rem;
+            color: #FFD700;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .obs-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #00E5FF;
+            font-size: 0.75rem;
+            outline: none;
+            font-family: monospace;
+        }
+        .obs-bar button {
+            padding: 4px 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #FFD700;
+            font-size: 0.7rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .obs-bar button:hover { background: rgba(255, 215, 0, 0.3); }
+        .copied { color: #4CAF50 !important; }
+
+        /* Player sections */
+        .player-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+        .player-section .name-group { flex: 1; }
+        .player-section .score-group { width: 60px; }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: #FFD700;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            background: #0a0a0f;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #e8e8e8;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        input:focus, select:focus { border-color: #FFD700; }
+
+        input[type="number"] {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
+
+        /* Autocomplete dropdown */
+        .autocomplete-wrapper { position: relative; }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #0a0a0f;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-top: none;
+            z-index: 10;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+        .autocomplete-list.visible { display: block; }
+        .autocomplete-item {
+            padding: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .autocomplete-item:hover { background: rgba(255, 215, 0, 0.1); }
+
+        /* Round selector */
+        .round-section { margin-bottom: 10px; }
+
+        /* Action buttons */
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .actions button {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .btn-swap {
+            background: rgba(0, 229, 255, 0.15);
+            color: #00E5FF;
+        }
+        .btn-swap:hover { background: rgba(0, 229, 255, 0.25); }
+        .btn-reset {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFD700;
+        }
+        .btn-reset:hover { background: rgba(255, 215, 0, 0.25); }
+        .btn-clear {
+            background: rgba(255, 23, 68, 0.15);
+            color: #FF1744;
+        }
+        .btn-clear:hover { background: rgba(255, 23, 68, 0.25); }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-top: 1px solid rgba(255, 215, 0, 0.1);
+            font-size: 0.7rem;
+            color: #666;
+        }
+        .status-bar a {
+            color: #888;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .status-bar a:hover { color: #FFD700; }
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .status-dot.connected { background: #4CAF50; }
+        .status-dot.disconnected { background: #FF1744; }
+    </style>
+</head>
+<body>
+    <!-- OBS URL -->
+    <div class="obs-bar">
+        <label>OBS URL:</label>
+        <input type="text" id="obsUrl" readonly>
+        <button onclick="copyUrl()">Copy</button>
+    </div>
+
+    <!-- Player 1 -->
+    <div class="player-section">
+        <div class="name-group">
+            <label>Player 1</label>
+            <div class="autocomplete-wrapper">
+                <input type="text" id="p1Name" placeholder="Player 1 name" autocomplete="off">
+                <div class="autocomplete-list" id="p1List"></div>
+            </div>
+        </div>
+        <div class="score-group">
+            <label>Score</label>
+            <input type="number" id="p1Score" value="0" min="0" max="99">
+        </div>
+    </div>
+
+    <!-- Player 2 -->
+    <div class="player-section">
+        <div class="name-group">
+            <label>Player 2</label>
+            <div class="autocomplete-wrapper">
+                <input type="text" id="p2Name" placeholder="Player 2 name" autocomplete="off">
+                <div class="autocomplete-list" id="p2List"></div>
+            </div>
+        </div>
+        <div class="score-group">
+            <label>Score</label>
+            <input type="number" id="p2Score" value="0" min="0" max="99">
+        </div>
+    </div>
+
+    <!-- Round -->
+    <div class="round-section">
+        <label>Round</label>
+        <select id="round">
+            <option value="">-- Select --</option>
+            <option value="Pools">Pools</option>
+            <option value="Winners R1">Winners R1</option>
+            <option value="Winners R2">Winners R2</option>
+            <option value="Winners Quarters">Winners Quarters</option>
+            <option value="Winners Semis">Winners Semis</option>
+            <option value="Winners Finals">Winners Finals</option>
+            <option value="Losers R1">Losers R1</option>
+            <option value="Losers R2">Losers R2</option>
+            <option value="Losers Quarters">Losers Quarters</option>
+            <option value="Losers Semis">Losers Semis</option>
+            <option value="Losers Finals">Losers Finals</option>
+            <option value="Grand Finals">Grand Finals</option>
+            <option value="Grand Finals Reset">Grand Finals Reset</option>
+        </select>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+        <button class="btn-swap" onclick="swap()">Swap</button>
+        <button class="btn-reset" onclick="resetScores()">Reset</button>
+        <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+        <span><span class="status-dot connected" id="statusDot"></span> <span id="statusText">Connected</span></span>
+        <a onclick="openSetup()">Settings</a>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        const config = ipcRenderer.sendSync('get-config');
+        const obsUrl = ipcRenderer.sendSync('get-overlay-url');
+        document.getElementById('obsUrl').value = obsUrl;
+
+        let searchTimeout;
+
+        // Push state to main process on any change
+        function pushState() {
+            const state = {
+                p1Name: document.getElementById('p1Name').value,
+                p2Name: document.getElementById('p2Name').value,
+                p1Score: document.getElementById('p1Score').value,
+                p2Score: document.getElementById('p2Score').value,
+                round: document.getElementById('round').value
+            };
+            ipcRenderer.send('update-state', state);
+        }
+
+        // Autocomplete search
+        async function searchPlayer(query, listId) {
+            if (query.length < 2) {
+                document.getElementById(listId).classList.remove('visible');
+                return;
+            }
+            try {
+                const res = await fetch(`${config.apiUrl}/api/players/search?name=${encodeURIComponent(query)}&key=${config.apiKey}`);
+                if (!res.ok) return;
+                const players = await res.json();
+                const list = document.getElementById(listId);
+                if (!players.length) {
+                    list.classList.remove('visible');
+                    return;
+                }
+                list.innerHTML = players.map(p =>
+                    `<div class="autocomplete-item" data-name="${p.display_name}">${p.display_name}</div>`
+                ).join('');
+                list.classList.add('visible');
+
+                list.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const input = list.parentElement.querySelector('input');
+                        input.value = item.dataset.name;
+                        list.classList.remove('visible');
+                        pushState();
+                    });
+                });
+            } catch (e) {
+                // API unavailable — silent
+            }
+        }
+
+        // Wire up inputs
+        ['p1Name', 'p2Name', 'p1Score', 'p2Score', 'round'].forEach(id => {
+            document.getElementById(id).addEventListener('input', pushState);
+            document.getElementById(id).addEventListener('change', pushState);
+        });
+
+        // Autocomplete for player names
+        document.getElementById('p1Name').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchPlayer(e.target.value, 'p1List'), 300);
+        });
+
+        document.getElementById('p2Name').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchPlayer(e.target.value, 'p2List'), 300);
+        });
+
+        // Close autocomplete on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.autocomplete-wrapper')) {
+                document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('visible'));
+            }
+        });
+
+        // Action buttons
+        function swap() {
+            const p1Name = document.getElementById('p1Name');
+            const p2Name = document.getElementById('p2Name');
+            const p1Score = document.getElementById('p1Score');
+            const p2Score = document.getElementById('p2Score');
+            [p1Name.value, p2Name.value] = [p2Name.value, p1Name.value];
+            [p1Score.value, p2Score.value] = [p2Score.value, p1Score.value];
+            pushState();
+        }
+
+        function resetScores() {
+            document.getElementById('p1Score').value = '0';
+            document.getElementById('p2Score').value = '0';
+            pushState();
+        }
+
+        function clearAll() {
+            document.getElementById('p1Name').value = '';
+            document.getElementById('p2Name').value = '';
+            document.getElementById('p1Score').value = '0';
+            document.getElementById('p2Score').value = '0';
+            document.getElementById('round').value = '';
+            pushState();
+        }
+
+        function copyUrl() {
+            const input = document.getElementById('obsUrl');
+            navigator.clipboard.writeText(input.value);
+            const btn = input.nextElementSibling;
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        }
+
+        function openSetup() {
+            ipcRenderer.send('open-setup');
+        }
+
+        // Connection check
+        async function checkConnection() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            try {
+                const res = await fetch(`${config.apiUrl}/api/players/search?name=test&key=${config.apiKey}`);
+                if (res.ok) {
+                    dot.className = 'status-dot connected';
+                    text.textContent = 'Connected';
+                } else {
+                    dot.className = 'status-dot disconnected';
+                    text.textContent = 'Auth failed';
+                }
+            } catch (e) {
+                dot.className = 'status-dot disconnected';
+                text.textContent = 'Offline';
+            }
+        }
+        checkConnection();
+    </script>
+</body>
+</html>

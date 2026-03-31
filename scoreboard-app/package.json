@@ -1,0 +1,28 @@
+{
+  "name": "lvbl-scoreboard",
+  "version": "1.0.0",
+  "description": "LV Battle League Stream Scoreboard",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.lvbattleleague.scoreboard",
+    "productName": "LVBL Scoreboard",
+    "win": {
+      "target": "portable"
+    },
+    "files": [
+      "src/**/*",
+      "overlay/**/*"
+    ]
+  }
+}

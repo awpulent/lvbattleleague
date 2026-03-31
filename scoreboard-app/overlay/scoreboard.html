@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LVBL Stream Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            background: transparent;
+            font-family: 'Barlow', sans-serif;
+            overflow: hidden;
+            text-transform: uppercase;
+        }
+
+        /* ===== SCOREBOARD BAR ===== */
+
+        #scoreboardBG {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1920px;
+            height: 60px;
+        }
+
+        .BGWrapper {
+            position: absolute;
+            top: 0;
+            height: 45px;
+        }
+
+        #leftBGWrapper { left: 303px; }
+
+        #p1PlayerBG {
+            position: absolute;
+            left: 0;
+            width: 375px;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #c40a18;
+            transform: skewX(20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #p1ScoreBG {
+            position: absolute;
+            left: 381px;
+            width: 49px;
+            height: 45px;
+            background: #c40a18;
+            border: 1px solid black;
+            transform: skewX(20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #rightBGWrapper { left: 1182px; }
+
+        #p2ScoreBG {
+            position: absolute;
+            left: 0;
+            width: 49px;
+            height: 45px;
+            background: #c40a18;
+            border: 1px solid black;
+            transform: skewX(-20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #p2PlayerBG {
+            position: absolute;
+            left: 55px;
+            width: 375px;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #c40a18;
+            transform: skewX(-20deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #roundBG {
+            position: absolute;
+            left: 840px;
+            width: 240px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #c40a18;
+            transform: perspective(100px) rotateX(-18deg);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+        }
+
+        #scoreboard {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1920px;
+            height: 60px;
+            z-index: 2;
+        }
+
+        #leftWrapper {
+            position: absolute;
+            top: 0;
+            left: 303px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+        }
+
+        #rightWrapper {
+            position: absolute;
+            top: 0;
+            left: 1182px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+        }
+
+        .scores {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 49px;
+            height: 45px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 34px;
+            color: white;
+            -webkit-text-stroke: 1px black;
+            text-shadow: 2px 2px 3px DimGray;
+        }
+
+        .wrappers {
+            display: flex;
+            align-items: center;
+            height: 45px;
+            padding: 0 20px;
+            width: 375px;
+        }
+
+        #p1Wrapper { justify-content: flex-start; }
+        #p2Wrapper { justify-content: flex-end; margin-left: 6px; }
+
+        .teams {
+            font-family: 'Barlow', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: #e5e5e5;
+            text-shadow: 2px 2px 3px DimGray;
+            margin-right: 8px;
+        }
+
+        #p2Wrapper .teams {
+            margin-right: 0;
+            margin-left: 8px;
+            order: 2;
+        }
+
+        .names {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 30px;
+            color: white;
+            text-shadow: 2px 2px 3px DimGray;
+            white-space: nowrap;
+        }
+
+        #rdWrapper {
+            position: absolute;
+            left: 840px;
+            top: 0;
+            width: 240px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #round {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            color: white;
+            text-shadow: 2px 2px 3px DimGray;
+            white-space: nowrap;
+        }
+
+        /* ===== PLAYER STAT CARDS ===== */
+
+        .stat-card {
+            position: absolute;
+            top: 865px;
+            padding: 12px 18px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #c40a18;
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            max-width: 300px;
+        }
+
+        .stat-card.visible { opacity: 1; }
+
+        .p1-stats { left: 10px; }
+        .p2-stats { right: 10px; text-align: right; }
+
+        .stat-card .stat-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            color: #FFD700;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-line {
+            font-size: 0.85rem;
+            color: white;
+            text-shadow: 2px 2px 3px DimGray;
+            margin-bottom: 2px;
+        }
+
+        .stat-card .stat-value {
+            color: #00E5FF;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        .stat-card .stat-rank {
+            color: #FFD700;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreboardBG">
+        <div id="roundBG"></div>
+        <div id="leftBGWrapper" class="BGWrapper">
+            <div id="p1PlayerBG"></div>
+            <div id="p1ScoreBG"></div>
+        </div>
+        <div id="rightBGWrapper" class="BGWrapper">
+            <div id="p2ScoreBG"></div>
+            <div id="p2PlayerBG"></div>
+        </div>
+    </div>
+
+    <div id="scoreboard">
+        <div id="leftWrapper">
+            <span id="p1Wrapper" class="wrappers">
+                <span id="p1Team" class="teams"></span>
+                <span id="p1Name" class="names">Player 1</span>
+            </span>
+            <span id="p1Score" class="scores">0</span>
+        </div>
+        <div id="rightWrapper">
+            <span id="p2Score" class="scores">0</span>
+            <span id="p2Wrapper" class="wrappers">
+                <span id="p2Team" class="teams"></span>
+                <span id="p2Name" class="names">Player 2</span>
+            </span>
+        </div>
+        <div id="rdWrapper">
+            <span id="round">-</span>
+        </div>
+    </div>
+
+    <div class="stat-card p1-stats" id="p1Stats"></div>
+    <div class="stat-card p2-stats" id="p2Stats"></div>
+
+    <script>
+        const LOCAL_SERVER = window.location.origin;
+        let apiUrl = '';
+        let apiKey = '';
+        let lastP1Name = '';
+        let lastP2Name = '';
+        let cachedP1Stats = null;
+        let cachedP2Stats = null;
+
+        // Get config from local server
+        async function loadConfig() {
+            const res = await fetch(`${LOCAL_SERVER}/config`);
+            const config = await res.json();
+            apiUrl = config.apiUrl;
+            apiKey = config.apiKey;
+        }
+
+        async function apiFetch(endpoint) {
+            try {
+                const res = await fetch(`${apiUrl}/api${endpoint}`, {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                if (!res.ok) return null;
+                return res.json();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function findPlayer(name) {
+            if (!name || name.length < 2) return null;
+            const results = await apiFetch(`/players/search?name=${encodeURIComponent(name)}`);
+            if (!results || !results.length) return null;
+            return results.find(r => r.display_name.toLowerCase() === name.toLowerCase()) || results[0];
+        }
+
+        function renderStatCard(elementId, stats) {
+            const el = document.getElementById(elementId);
+            if (!stats) {
+                el.classList.remove('visible');
+                return;
+            }
+            el.innerHTML = `
+                <div class="stat-name">${stats.name}</div>
+                ${stats.rank ? `<div class="stat-line">Season Rank: <span class="stat-rank">#${stats.rank}</span></div>` : ''}
+                ${stats.characters.length ? `<div class="stat-line">Main: <span class="stat-value">${stats.characters[0].name}</span></div>` : ''}
+            `;
+            el.classList.add('visible');
+        }
+
+        async function updateStats(p1Name, p2Name) {
+            const [p1Result, p2Result] = await Promise.all([
+                findPlayer(p1Name),
+                findPlayer(p2Name)
+            ]);
+
+            const [p1Stats, p2Stats] = await Promise.all([
+                p1Result ? apiFetch(`/players/${p1Result.id}/stats`) : null,
+                p2Result ? apiFetch(`/players/${p2Result.id}/stats`) : null
+            ]);
+
+            if (p1Stats) cachedP1Stats = p1Stats;
+            if (p2Stats) cachedP2Stats = p2Stats;
+
+            renderStatCard('p1Stats', cachedP1Stats);
+            renderStatCard('p2Stats', cachedP2Stats);
+        }
+
+        async function pollState() {
+            try {
+                const res = await fetch(`${LOCAL_SERVER}/state?t=${Date.now()}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const p1Name = (data.p1Name || '').trim();
+                const p2Name = (data.p2Name || '').trim();
+
+                document.getElementById('p1Name').textContent = p1Name || 'Player 1';
+                document.getElementById('p2Name').textContent = p2Name || 'Player 2';
+                document.getElementById('p1Score').textContent = data.p1Score || '0';
+                document.getElementById('p2Score').textContent = data.p2Score || '0';
+                document.getElementById('p1Team').textContent = data.p1Team || '';
+                document.getElementById('p2Team').textContent = data.p2Team || '';
+                document.getElementById('round').textContent = data.round || '-';
+
+                if (p1Name !== lastP1Name || p2Name !== lastP2Name) {
+                    lastP1Name = p1Name;
+                    lastP2Name = p2Name;
+                    if (p1Name && p2Name) {
+                        await updateStats(p1Name, p2Name);
+                    } else {
+                        cachedP1Stats = null;
+                        cachedP2Stats = null;
+                        document.getElementById('p1Stats').classList.remove('visible');
+                        document.getElementById('p2Stats').classList.remove('visible');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // Init
+        loadConfig().then(() => {
+            setInterval(pollState, 500);
+            pollState();
+        });
+    </script>
+</body>
+</html>

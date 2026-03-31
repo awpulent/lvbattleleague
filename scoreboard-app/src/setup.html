@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LVBL Scoreboard — Setup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a24;
+            color: #e8e8e8;
+            padding: 30px;
+            user-select: none;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: #FFD700;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0f;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #e8e8e8;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #FFD700;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FFD700, #FF1744);
+            border: none;
+            color: #0a0a0f;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .hint {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>LVBL Scoreboard</h1>
+    <p class="subtitle">First-time setup — you only need to do this once.</p>
+
+    <label>Site URL</label>
+    <input type="text" id="apiUrl" placeholder="https://lvbattleleague.com">
+    <p class="hint">The URL of your league's site (e.g. https://lvbattleleague.com)</p>
+
+    <label>Overlay API Key</label>
+    <input type="text" id="apiKey" placeholder="Your API key">
+    <p class="hint">Get this from your league admin</p>
+
+    <button onclick="save()">Save & Continue</button>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        // Pre-fill if config exists
+        const config = ipcRenderer.sendSync('get-config');
+        if (config.apiUrl) document.getElementById('apiUrl').value = config.apiUrl;
+        if (config.apiKey) document.getElementById('apiKey').value = config.apiKey;
+
+        function save() {
+            const apiUrl = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiUrl || !apiKey) {
+                alert('Both fields are required.');
+                return;
+            }
+            ipcRenderer.send('save-config', { apiUrl, apiKey });
+        }
+    </script>
+</body>
+</html>
