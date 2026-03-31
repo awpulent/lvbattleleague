@@ -28,6 +28,81 @@ router.get('/', adminAuth, async (req, res) => {
     }
 });
 
+// Find duplicate players (same name, case-insensitive)
+router.get('/duplicates', adminAuth, async (req, res) => {
+    try {
+        const { rows } = await pool.query(`
+            SELECT
+                LOWER(display_name) as name_lower,
+                json_agg(json_build_object(
+                    'id', id,
+                    'display_name', display_name,
+                    'startgg_id', startgg_id,
+                    'has_placements', (SELECT COUNT(*) FROM placements WHERE player_id = players.id),
+                    'has_sets', (SELECT COUNT(*) FROM sets WHERE winner_id = players.id OR loser_id = players.id)
+                )) as players
+            FROM players
+            GROUP BY LOWER(display_name)
+            HAVING COUNT(*) > 1
+            ORDER BY LOWER(display_name)
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error('Duplicates error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Merge two players: moves all data from source to target, deletes source
+router.post('/merge-players', adminAuth, async (req, res) => {
+    try {
+        const { keepId, removeId } = req.body;
+        if (!keepId || !removeId) return res.status(400).json({ error: 'keepId and removeId required' });
+
+        const keep = parseInt(keepId);
+        const remove = parseInt(removeId);
+
+        // Move placements (skip conflicts)
+        await pool.query(`
+            UPDATE placements SET player_id = $1
+            WHERE player_id = $2
+            AND tournament_id NOT IN (SELECT tournament_id FROM placements WHERE player_id = $1)
+        `, [keep, remove]);
+        await pool.query('DELETE FROM placements WHERE player_id = $1', [remove]);
+
+        // Move sets
+        await pool.query('UPDATE sets SET winner_id = $1 WHERE winner_id = $2', [keep, remove]);
+        await pool.query('UPDATE sets SET loser_id = $1 WHERE loser_id = $2', [keep, remove]);
+
+        // Move games
+        await pool.query('UPDATE games SET winner_id = $1 WHERE winner_id = $2', [keep, remove]);
+
+        // Move aliases
+        await pool.query(`
+            INSERT INTO player_aliases (player_id, alias)
+            SELECT $1, alias FROM player_aliases WHERE player_id = $2
+            ON CONFLICT DO NOTHING
+        `, [keep, remove]);
+        // Add the removed player's display name as an alias
+        const removedPlayer = await pool.query('SELECT display_name FROM players WHERE id = $1', [remove]);
+        if (removedPlayer.rows.length) {
+            await pool.query(
+                'INSERT INTO player_aliases (player_id, alias) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                [keep, removedPlayer.rows[0].display_name]
+            );
+        }
+
+        // Delete removed player's aliases and the player itself
+        await pool.query('DELETE FROM player_aliases WHERE player_id = $1', [remove]);
+        await pool.query('DELETE FROM players WHERE id = $1', [remove]);
+
+        res.json({ success: true, kept: keep, removed: remove });
+    } catch (err) {
+        console.error('Merge error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Rename a season
 router.post('/rename-season', adminAuth, async (req, res) => {
     try {
