@@ -2,7 +2,7 @@
 // No external dependencies — resets on app restart which is fine for this use case
 
 const windowMs = 60 * 1000; // 1 minute
-const maxRequests = 10;
+const maxRequests = 60; // Autocomplete + stats lookups need headroom
 
 const requests = new Map(); // key -> { count, resetAt }
 
@@ -22,7 +22,7 @@ function rateLimit(req, res, next) {
     res.set('X-RateLimit-Remaining', String(Math.max(0, maxRequests - entry.count)));
 
     if (entry.count > maxRequests) {
-        return res.status(429).json({ error: 'Rate limit exceeded. Max 10 requests per minute.' });
+        return res.status(429).json({ error: 'Rate limit exceeded. Max 60 requests per minute.' });
     }
 
     next();

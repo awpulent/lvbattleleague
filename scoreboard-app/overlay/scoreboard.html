@@ -276,6 +276,7 @@
         let lastP2Name = '';
         let cachedP1Stats = null;
         let cachedP2Stats = null;
+        let statsDebounce = null;
 
         // Get config from local server
         async function loadConfig() {
@@ -356,9 +357,12 @@
                 if (p1Name !== lastP1Name || p2Name !== lastP2Name) {
                     lastP1Name = p1Name;
                     lastP2Name = p2Name;
+
+                    // Debounce: wait 1.5s after last name change before fetching stats
+                    clearTimeout(statsDebounce);
                     if (p1Name && p2Name) {
-                        await updateStats(p1Name, p2Name);
-                    } else {
+                        statsDebounce = setTimeout(() => updateStats(p1Name, p2Name), 1500);
+                    } else if (!p1Name && !p2Name) {
                         cachedP1Stats = null;
                         cachedP2Stats = null;
                         document.getElementById('p1Stats').classList.remove('visible');
