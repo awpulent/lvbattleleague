@@ -142,9 +142,9 @@ router.post('/clear-season', adminAuth, async (req, res) => {
 // Sync trigger
 router.post('/sync', adminAuth, async (req, res) => {
     try {
-        const { tournamentSlug, seasonId, weekNumber } = req.body;
+        const { tournamentSlug, seasonId, weekNumber, eventName } = req.body;
         const ingest = require('../sync/ingest');
-        const result = await ingest.syncTournament(tournamentSlug, parseInt(seasonId), parseInt(weekNumber));
+        const result = await ingest.syncTournament(tournamentSlug, parseInt(seasonId), parseInt(weekNumber), eventName || null);
         res.json({ success: true, result });
     } catch (err) {
         console.error('Sync error:', err);

@@ -84,7 +84,7 @@ async function upsertPlayer(startggId, gamerTag) {
     return playerId;
 }
 
-async function syncTournament(tournamentSlug, seasonId, weekNumber) {
+async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName) {
     console.log(`Syncing tournament: ${tournamentSlug}`);
 
     // 1. Get tournament and find the event (pick the first/largest event if multiple)
@@ -103,6 +103,9 @@ async function syncTournament(tournamentSlug, seasonId, weekNumber) {
 
     // 2. Create or update tournament record
     const tournamentDate = tournament.startAt ? new Date(tournament.startAt * 1000) : null;
+    // Use custom name if provided, otherwise default to "Week N"
+    const displayName = eventName || `Week ${weekNumber}`;
+
     const tournResult = await pool.query(`
         INSERT INTO tournaments (season_id, startgg_tournament_id, startgg_event_id, name, week_number, date, entrant_count)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -111,7 +114,7 @@ async function syncTournament(tournamentSlug, seasonId, weekNumber) {
             entrant_count = EXCLUDED.entrant_count,
             synced_at = NOW()
         RETURNING id
-    `, [seasonId, tournament.id, event.id, `Week ${weekNumber}`, weekNumber, tournamentDate, event.numEntrants]);
+    `, [seasonId, tournament.id, event.id, displayName, weekNumber, tournamentDate, event.numEntrants]);
     const tournamentId = tournResult.rows[0].id;
 
     // 3. Get standings and create placements
