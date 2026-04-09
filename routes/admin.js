@@ -116,6 +116,22 @@ router.post('/rename-season', adminAuth, async (req, res) => {
     }
 });
 
+// Rename a tournament
+router.post('/rename-tournament', adminAuth, async (req, res) => {
+    try {
+        const { seasonId, weekNumber, name } = req.body;
+        if (!seasonId || !weekNumber || !name) return res.status(400).json({ error: 'seasonId, weekNumber, and name required' });
+        const result = await pool.query(
+            'UPDATE tournaments SET name = $1 WHERE season_id = $2 AND week_number = $3',
+            [name, parseInt(seasonId), parseInt(weekNumber)]
+        );
+        res.json({ success: true, updated: result.rowCount });
+    } catch (err) {
+        console.error('Rename tournament error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Clear a season's tournament data (placements, sets, games, tournaments) so it can be re-synced
 router.post('/clear-season', adminAuth, async (req, res) => {
     try {
