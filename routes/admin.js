@@ -116,6 +116,37 @@ router.post('/rename-season', adminAuth, async (req, res) => {
     }
 });
 
+// Apply a points multiplier to all placements in a tournament (by name)
+router.post('/multiply-points', adminAuth, async (req, res) => {
+    try {
+        const { tournamentName, multiplier } = req.body;
+        if (!tournamentName || !multiplier) return res.status(400).json({ error: 'tournamentName and multiplier required' });
+
+        const m = parseFloat(multiplier);
+        if (isNaN(m) || m <= 0) return res.status(400).json({ error: 'multiplier must be a positive number' });
+
+        // Find tournaments by name
+        const tournaments = await pool.query('SELECT id, name, season_id FROM tournaments WHERE name = $1', [tournamentName]);
+        if (!tournaments.rows.length) return res.status(404).json({ error: `No tournament found named "${tournamentName}"` });
+
+        // Update placements — round up to match league scoring rules
+        const result = await pool.query(
+            `UPDATE placements SET points = CEIL(points * $1) WHERE tournament_id = ANY($2)`,
+            [m, tournaments.rows.map(t => t.id)]
+        );
+
+        res.json({
+            success: true,
+            tournaments: tournaments.rows,
+            placementsUpdated: result.rowCount,
+            multiplier: m
+        });
+    } catch (err) {
+        console.error('Multiply points error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Rename a tournament
 router.post('/rename-tournament', adminAuth, async (req, res) => {
     try {
