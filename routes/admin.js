@@ -103,6 +103,40 @@ router.post('/merge-players', adminAuth, async (req, res) => {
     }
 });
 
+// Create a new season
+router.post('/create-season', adminAuth, async (req, res) => {
+    try {
+        const { name, isActive } = req.body;
+        if (!name) return res.status(400).json({ error: 'name required' });
+
+        const makeActive = isActive === true || isActive === 'true';
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            if (makeActive) {
+                await client.query('UPDATE seasons SET is_active = false');
+            }
+            const result = await client.query(
+                'INSERT INTO seasons (name, is_active) VALUES ($1, $2) RETURNING id, name, is_active',
+                [name, makeActive]
+            );
+            await client.query('COMMIT');
+            res.json({ success: true, season: result.rows[0] });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (err) {
+        console.error('Create season error:', err);
+        if (err.code === '23505') {
+            return res.status(409).json({ error: `Season "${req.body.name}" already exists` });
+        }
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Rename a season
 router.post('/rename-season', adminAuth, async (req, res) => {
     try {
