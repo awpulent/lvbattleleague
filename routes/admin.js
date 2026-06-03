@@ -223,9 +223,15 @@ router.post('/clear-season', adminAuth, async (req, res) => {
 // Sync trigger
 router.post('/sync', adminAuth, async (req, res) => {
     try {
-        const { tournamentSlug, seasonId, weekNumber, eventName } = req.body;
+        const { tournamentSlug, seasonId, weekNumber, eventName, useMultiplier, attendancePoint } = req.body;
+        const options = {
+            // multiplier on unless explicitly disabled (backwards compatible)
+            useMultiplier: useMultiplier !== false && useMultiplier !== 'false',
+            // attendance point off unless explicitly enabled
+            attendancePoint: attendancePoint === true || attendancePoint === 'true'
+        };
         const ingest = require('../sync/ingest');
-        const result = await ingest.syncTournament(tournamentSlug, parseInt(seasonId), parseInt(weekNumber), eventName || null);
+        const result = await ingest.syncTournament(tournamentSlug, parseInt(seasonId), parseInt(weekNumber), eventName || null, options);
         res.json({ success: true, result });
     } catch (err) {
         console.error('Sync error:', err);

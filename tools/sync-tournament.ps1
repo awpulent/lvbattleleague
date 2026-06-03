@@ -51,6 +51,19 @@ Write-Host ""
 Write-Host "Optional: custom event name (leave blank for 'Week $weekNumber')" -ForegroundColor Cyan
 $eventName = Read-Host "Event name (or press Enter to skip)"
 
+# Scoring options
+Write-Host ""
+Write-Host "Apply the entrant-count multiplier to placement points?" -ForegroundColor Cyan
+Write-Host "Default: yes. Answer 'n' for flat base points (no multiplier)." -ForegroundColor DarkGray
+$multInput = Read-Host "Use multiplier? (y/n, default y)"
+$useMultiplier = ($multInput.Trim().ToLower() -ne "n")
+
+Write-Host ""
+Write-Host "Award 1 attendance point per player (added to placement points)?" -ForegroundColor Cyan
+Write-Host "Default: no. Use the same answer all season for consistency." -ForegroundColor DarkGray
+$attInput = Read-Host "Attendance point? (y/n, default n)"
+$attendancePoint = ($attInput.Trim().ToLower() -eq "y")
+
 Write-Host ""
 Write-Host "---" -ForegroundColor DarkGray
 
@@ -59,6 +72,8 @@ $body = @{
     tournamentSlug = $slug
     seasonId = [int]$seasonId
     weekNumber = [int]$weekNumber
+    useMultiplier = $useMultiplier
+    attendancePoint = $attendancePoint
 }
 
 if ($eventName -ne "") {
@@ -76,6 +91,8 @@ Write-Host "  Week: $weekNumber"
 if ($eventName -ne "") {
     Write-Host "  Display Name: $eventName"
 }
+Write-Host "  Multiplier: $(if ($useMultiplier) { 'yes' } else { 'NO (flat base points)' })"
+Write-Host "  Attendance point: $(if ($attendancePoint) { 'yes (+1 per player)' } else { 'no' })"
 Write-Host ""
 $confirm = Read-Host "Proceed? (y/n)"
 

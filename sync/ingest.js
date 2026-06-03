@@ -84,8 +84,9 @@ async function upsertPlayer(startggId, gamerTag) {
     return playerId;
 }
 
-async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName) {
-    console.log(`Syncing tournament: ${tournamentSlug}`);
+async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName, options = {}) {
+    const { useMultiplier = true, attendancePoint = false } = options;
+    console.log(`Syncing tournament: ${tournamentSlug} (multiplier: ${useMultiplier}, attendancePoint: ${attendancePoint})`);
 
     // 1. Get tournament and find the event (pick the first/largest event if multiple)
     const tournament = await getTournamentEvent(tournamentSlug);
@@ -137,7 +138,7 @@ async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName) {
             const playerId = await upsertPlayer(startggPlayerId, gamerTag);
             entrantToPlayer[node.entrant.id] = playerId;
 
-            const points = placementToPoints(placement, event.numEntrants);
+            const points = placementToPoints(placement, event.numEntrants, { useMultiplier, attendancePoint });
 
             await pool.query(`
                 INSERT INTO placements (tournament_id, player_id, placement, points)
@@ -266,7 +267,9 @@ async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName) {
         entrants: event.numEntrants,
         sets: setsInserted,
         games: gamesInserted,
-        players: Object.keys(entrantToPlayer).length
+        players: Object.keys(entrantToPlayer).length,
+        useMultiplier,
+        attendancePoint
     };
     console.log('Sync complete:', summary);
     return summary;

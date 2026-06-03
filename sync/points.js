@@ -29,7 +29,13 @@ function getMultiplier(entrantCount) {
     return 0.5;
 }
 
-function placementToPoints(placement, entrantCount) {
+// options:
+//   useMultiplier  - apply the entrant-count multiplier (default true)
+//   attendancePoint - add 1 point per attendee for showing up (default false)
+function placementToPoints(placement, entrantCount, options = {}) {
+    const { useMultiplier = true, attendancePoint = false } = options;
+    const bonus = attendancePoint ? 1 : 0;
+
     // Find base points for this placement
     const brackets = Object.keys(BASE_POINTS).map(Number).sort((a, b) => a - b);
     let base = 0;
@@ -40,13 +46,11 @@ function placementToPoints(placement, entrantCount) {
         }
     }
 
-    if (base === 0) return 0;
+    // 13th and beyond earn no placement points, but still get the attendance point
+    if (base === 0 || placement > 12) return bonus;
 
-    // 13th and beyond get no points
-    if (placement > 12) return 0;
-
-    const multiplier = getMultiplier(entrantCount);
-    return Math.ceil(base * multiplier);
+    const multiplier = useMultiplier ? getMultiplier(entrantCount) : 1;
+    return Math.ceil(base * multiplier) + bonus;
 }
 
 module.exports = { placementToPoints, getMultiplier };
