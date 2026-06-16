@@ -107,9 +107,10 @@ Write-Host "Syncing..." -ForegroundColor Yellow
 
 try {
     $response = Invoke-WebRequest `
-        -Uri "https://lvbattleleague.com/admin/sync?secret=$secret" `
+        -Uri "https://lvbattleleague.com/admin/sync" `
         -Method POST `
         -ContentType "application/json" `
+        -Headers @{ Authorization = "Bearer $secret" } `
         -Body $jsonBody
 
     $result = $response.Content | ConvertFrom-Json
