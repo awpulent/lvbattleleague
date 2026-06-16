@@ -38,7 +38,7 @@ app.use('/api', apiRoutes);
 async function start() {
     try {
         console.log('Running database migrations...');
-        const { default: migrate } = await import('node-pg-migrate');
+        const { runner: migrate } = await import('node-pg-migrate');
         await migrate({
             databaseUrl: getDbConfig(),
             migrationsTable: 'pgmigrations',
