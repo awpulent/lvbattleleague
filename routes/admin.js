@@ -137,6 +137,39 @@ router.post('/create-season', adminAuth, async (req, res) => {
     }
 });
 
+// Update per-season settings (dropWorstWeek, isActive, etc.)
+router.post('/update-season', adminAuth, async (req, res) => {
+    try {
+        const { seasonId, dropWorstWeek, isActive } = req.body;
+        if (!seasonId) return res.status(400).json({ error: 'seasonId required' });
+
+        const updates = [];
+        const values = [];
+
+        if (dropWorstWeek !== undefined) {
+            updates.push(`drop_worst_week = $${values.length + 1}`);
+            values.push(dropWorstWeek === true || dropWorstWeek === 'true');
+        }
+        if (isActive !== undefined) {
+            updates.push(`is_active = $${values.length + 1}`);
+            values.push(isActive === true || isActive === 'true');
+        }
+
+        if (!updates.length) return res.status(400).json({ error: 'no fields to update' });
+
+        values.push(parseInt(seasonId));
+        const { rows } = await pool.query(
+            `UPDATE seasons SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING id, name, is_active, drop_worst_week`,
+            values
+        );
+        if (!rows.length) return res.status(404).json({ error: `Season ${seasonId} not found` });
+        res.json({ success: true, season: rows[0] });
+    } catch (err) {
+        console.error('Update season error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Rename a season
 router.post('/rename-season', adminAuth, async (req, res) => {
     try {
