@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const { default: migrate } = require('node-pg-migrate');
 const { getDbConfig } = require('./db/config');
 
 const dbUrl = process.env.DATABASE_URL || 'NOT SET';
@@ -39,6 +38,7 @@ app.use('/api', apiRoutes);
 async function start() {
     try {
         console.log('Running database migrations...');
+        const { default: migrate } = await import('node-pg-migrate');
         await migrate({
             databaseUrl: getDbConfig(),
             migrationsTable: 'pgmigrations',
