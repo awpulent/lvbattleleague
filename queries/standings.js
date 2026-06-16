@@ -17,9 +17,7 @@ async function getActiveSeason() {
     return fallback.rows[0] || null;
 }
 
-async function getStandings(seasonId) {
-    // Get all placements for this season, grouped by player
-    // Drop worst week (lowest score) per player
+async function getStandings(seasonId, dropWorstWeek = true) {
     const { rows } = await pool.query(`
         WITH player_scores AS (
             SELECT
@@ -40,10 +38,10 @@ async function getStandings(seasonId) {
             SUM(points) as total_points,
             total_weeks as weeks_attended
         FROM player_scores
-        WHERE rn > 1 OR total_weeks = 1
+        WHERE $2 = false OR rn > 1 OR total_weeks = 1
         GROUP BY player_db_id, display_name, total_weeks
         ORDER BY SUM(points) DESC
-    `, [seasonId]);
+    `, [seasonId, dropWorstWeek]);
     return rows;
 }
 
@@ -80,8 +78,8 @@ async function getWeekResults(seasonId) {
     return weeks;
 }
 
-async function getSeasonStats(seasonId) {
-    const standings = await getStandings(seasonId);
+async function getSeasonStats(seasonId, dropWorstWeek = true) {
+    const standings = await getStandings(seasonId, dropWorstWeek);
     const weeks = await getWeekResults(seasonId);
 
     const weekCount = Object.keys(weeks).length;

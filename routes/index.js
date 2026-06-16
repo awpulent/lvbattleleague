@@ -19,9 +19,9 @@ router.get('/', async (req, res) => {
         }
 
         const [standings, weeks, stats, sponsors] = await Promise.all([
-            getStandings(currentSeason.id),
+            getStandings(currentSeason.id, currentSeason.drop_worst_week),
             getWeekResults(currentSeason.id),
-            getSeasonStats(currentSeason.id),
+            getSeasonStats(currentSeason.id, currentSeason.drop_worst_week),
             pool.query('SELECT * FROM sponsors WHERE is_active = true ORDER BY display_order ASC')
         ]);
 

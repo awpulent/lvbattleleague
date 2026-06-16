@@ -94,7 +94,7 @@ async function getEventSets(eventId, page = 1, perPage = 10) {
     const data = await gqlQuery(`
         query EventSets($eventId: ID!, $page: Int!, $perPage: Int!) {
             event(id: $eventId) {
-                sets(page: $page, perPage: $perPage, sortType: ROUND) {
+                sets(page: $page, perPage: $perPage) {
                     pageInfo { totalPages }
                     nodes {
                         id

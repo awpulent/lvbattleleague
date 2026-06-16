@@ -17,7 +17,8 @@ CREATE TABLE seasons (
     name            TEXT NOT NULL UNIQUE,
     start_date      DATE,
     end_date        DATE,
-    is_active       BOOLEAN DEFAULT FALSE
+    is_active       BOOLEAN DEFAULT FALSE,
+    drop_worst_week BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE tournaments (
