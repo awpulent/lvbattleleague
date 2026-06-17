@@ -1,6 +1,6 @@
 {
   "name": "lvbl-scoreboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "LV Battle League Stream Scoreboard",
   "author": "LV Battle League",
   "main": "src/main.js",
