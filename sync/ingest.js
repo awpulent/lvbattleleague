@@ -43,6 +43,10 @@ function resolveCharacter(selectionValue) {
 
 // Upsert a player by their start.gg ID
 async function upsertPlayer(startggId, gamerTag) {
+    // Defense-in-depth: strip control chars + HTML metacharacters and cap length so
+    // an attacker-chosen start.gg gamerTag can never carry markup into the DB.
+    gamerTag = String(gamerTag || '').replace(/[<>\x00-\x1F\x7F]/g, '').trim().slice(0, 64);
+
     // Try to find existing player
     let result = await pool.query(
         'SELECT id FROM players WHERE startgg_id = $1',

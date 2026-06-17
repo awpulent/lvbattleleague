@@ -327,11 +327,33 @@
                 el.classList.remove('visible');
                 return;
             }
-            el.innerHTML = `
-                <div class="stat-name">${stats.name}</div>
-                ${stats.rank ? `<div class="stat-line">Season Rank: <span class="stat-rank">#${stats.rank}</span></div>` : ''}
-                ${stats.characters.length ? `<div class="stat-line">Main: <span class="stat-value">${stats.characters[0].name}</span></div>` : ''}
-            `;
+            // Build with textContent so an attacker-chosen gamerTag (stats.name)
+            // cannot inject markup/script via innerHTML.
+            el.replaceChildren();
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'stat-name';
+            nameDiv.textContent = stats.name;
+            el.appendChild(nameDiv);
+            if (stats.rank) {
+                const line = document.createElement('div');
+                line.className = 'stat-line';
+                line.append('Season Rank: ');
+                const rank = document.createElement('span');
+                rank.className = 'stat-rank';
+                rank.textContent = '#' + stats.rank;
+                line.appendChild(rank);
+                el.appendChild(line);
+            }
+            if (stats.characters.length) {
+                const line = document.createElement('div');
+                line.className = 'stat-line';
+                line.append('Main: ');
+                const val = document.createElement('span');
+                val.className = 'stat-value';
+                val.textContent = stats.characters[0].name;
+                line.appendChild(val);
+                el.appendChild(line);
+            }
             el.classList.add('visible');
         }
 

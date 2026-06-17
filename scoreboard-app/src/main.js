@@ -45,13 +45,16 @@ function startOverlayServer() {
         res.json(scoreboardState);
     });
 
-    // API: get config (only apiUrl, not the key — overlay needs this)
+    // API: get config. Returns apiKey so the bundled overlay can authenticate to
+    // the production API. The server is bound to loopback (below), so only local
+    // processes (the OBS browser-source on this machine) can read it.
     server.get('/config', (req, res) => {
         res.json({ apiUrl: config.apiUrl, apiKey: config.apiKey });
     });
 
-    overlayServer = server.listen(OVERLAY_PORT, () => {
-        console.log(`Overlay server running on http://localhost:${OVERLAY_PORT}`);
+    // Bind to loopback only so the key / state are not reachable from the LAN.
+    overlayServer = server.listen(OVERLAY_PORT, '127.0.0.1', () => {
+        console.log(`Overlay server running on http://127.0.0.1:${OVERLAY_PORT}`);
     });
 }
 
@@ -61,8 +64,10 @@ function createWindow() {
         height: 620,
         resizable: false,
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true,
+            preload: path.join(__dirname, 'preload.js')
         },
         title: 'LVBL Scoreboard',
         autoHideMenuBar: true

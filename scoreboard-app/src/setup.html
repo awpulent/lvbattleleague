@@ -80,10 +80,8 @@
     <button onclick="save()">Save & Continue</button>
 
     <script>
-        const { ipcRenderer } = require('electron');
-
         // Pre-fill if config exists
-        const config = ipcRenderer.sendSync('get-config');
+        const config = window.lvbl.getConfig();
         if (config.apiUrl) document.getElementById('apiUrl').value = config.apiUrl;
         if (config.apiKey) document.getElementById('apiKey').value = config.apiKey;
 
@@ -94,7 +92,7 @@
                 alert('Both fields are required.');
                 return;
             }
-            ipcRenderer.send('save-config', { apiUrl, apiKey });
+            window.lvbl.saveConfig({ apiUrl, apiKey });
         }
     </script>
 </body>

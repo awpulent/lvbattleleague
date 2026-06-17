@@ -3,21 +3,70 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const adminAuth = require('../middleware/auth');
+const safeEqual = require('../middleware/safe-equal');
 const pool = require('../db/pool');
+
+// --- Auth: cookie-based login so the admin secret never travels in a URL ---
+router.get('/login', (req, res) => {
+    res.render('login', { error: null });
+});
+
+router.post('/login', (req, res) => {
+    const secret = process.env.ADMIN_SECRET || '';
+    const supplied = req.body?.adminSecret || '';
+    if (secret && safeEqual(supplied, secret)) {
+        res.cookie('lvbl_admin', '1', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            signed: true,
+            maxAge: 8 * 60 * 60 * 1000,
+        });
+        return res.redirect('/admin');
+    }
+    return res.status(401).render('login', { error: 'Invalid secret' });
+});
+
+router.post('/logout', (req, res) => {
+    res.clearCookie('lvbl_admin');
+    res.redirect('/admin/login');
+});
 
 // Sponsor logo upload config
 const storage = multer.diskStorage({
     destination: path.join(__dirname, '..', 'public', 'img', 'sponsors'),
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = file.originalname.replace(ext, '').replace(/\s+/g, '-').toLowerCase();
-        cb(null, `${name}-${Date.now()}${ext}`);
+        const ext = path.extname(file.originalname).toLowerCase();
+        const base = path.basename(file.originalname, path.extname(file.originalname))
+            .replace(/[^a-z0-9_-]/gi, '-').toLowerCase().slice(0, 40) || 'logo';
+        cb(null, `${base}-${Date.now()}${ext}`);
     }
 });
-const upload = multer({ storage });
+
+const ALLOWED_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const upload = multer({
+    storage,
+    limits: { fileSize: 2 * 1024 * 1024, files: 1, fields: 10, parts: 12 },
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, ALLOWED_MIME.has(file.mimetype) && ALLOWED_EXT.has(ext));
+    }
+});
+
+// Wrap multer so size/type rejections and missing files return clean 400s
+// instead of throwing (which previously 500'd on req.file.filename).
+function uploadLogo(req, res, next) {
+    upload.single('logo')(req, res, (err) => {
+        if (err instanceof multer.MulterError) return res.status(400).json({ error: `Upload error: ${err.code}` });
+        if (err) return res.status(400).json({ error: 'Invalid upload' });
+        if (!req.file) return res.status(400).json({ error: 'No valid logo file (png, jpg, webp, gif; max 2MB)' });
+        next();
+    });
+}
 
 // Admin page
-router.get('/', adminAuth, async (req, res) => {
+router.get('/', adminAuth, async (req, res, next) => {
     try {
         const seasons = await pool.query('SELECT * FROM seasons ORDER BY id DESC');
         const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY display_order ASC');
@@ -29,7 +78,7 @@ router.get('/', adminAuth, async (req, res) => {
 });
 
 // Find duplicate players (same name, case-insensitive)
-router.get('/duplicates', adminAuth, async (req, res) => {
+router.get('/duplicates', adminAuth, async (req, res, next) => {
     try {
         const { rows } = await pool.query(`
             SELECT
@@ -49,12 +98,12 @@ router.get('/duplicates', adminAuth, async (req, res) => {
         res.json(rows);
     } catch (err) {
         console.error('Duplicates error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Merge two players: moves all data from source to target, deletes source
-router.post('/merge-players', adminAuth, async (req, res) => {
+router.post('/merge-players', adminAuth, async (req, res, next) => {
     try {
         const { keepId, removeId } = req.body;
         if (!keepId || !removeId) return res.status(400).json({ error: 'keepId and removeId required' });
@@ -99,12 +148,12 @@ router.post('/merge-players', adminAuth, async (req, res) => {
         res.json({ success: true, kept: keep, removed: remove });
     } catch (err) {
         console.error('Merge error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Create a new season
-router.post('/create-season', adminAuth, async (req, res) => {
+router.post('/create-season', adminAuth, async (req, res, next) => {
     try {
         const { name, isActive } = req.body;
         if (!name) return res.status(400).json({ error: 'name required' });
@@ -133,12 +182,12 @@ router.post('/create-season', adminAuth, async (req, res) => {
         if (err.code === '23505') {
             return res.status(409).json({ error: `Season "${req.body.name}" already exists` });
         }
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Update per-season settings (dropWorstWeek, isActive, etc.)
-router.post('/update-season', adminAuth, async (req, res) => {
+router.post('/update-season', adminAuth, async (req, res, next) => {
     try {
         const { seasonId, dropWorstWeek, isActive } = req.body;
         if (!seasonId) return res.status(400).json({ error: 'seasonId required' });
@@ -166,12 +215,12 @@ router.post('/update-season', adminAuth, async (req, res) => {
         res.json({ success: true, season: rows[0] });
     } catch (err) {
         console.error('Update season error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Rename a season
-router.post('/rename-season', adminAuth, async (req, res) => {
+router.post('/rename-season', adminAuth, async (req, res, next) => {
     try {
         const { seasonId, name } = req.body;
         if (!seasonId || !name) return res.status(400).json({ error: 'seasonId and name required' });
@@ -179,12 +228,12 @@ router.post('/rename-season', adminAuth, async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('Rename season error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Apply a points multiplier to all placements in a tournament (by name)
-router.post('/multiply-points', adminAuth, async (req, res) => {
+router.post('/multiply-points', adminAuth, async (req, res, next) => {
     try {
         const { tournamentName, multiplier } = req.body;
         if (!tournamentName || !multiplier) return res.status(400).json({ error: 'tournamentName and multiplier required' });
@@ -210,12 +259,12 @@ router.post('/multiply-points', adminAuth, async (req, res) => {
         });
     } catch (err) {
         console.error('Multiply points error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Rename a tournament
-router.post('/rename-tournament', adminAuth, async (req, res) => {
+router.post('/rename-tournament', adminAuth, async (req, res, next) => {
     try {
         const { seasonId, weekNumber, name } = req.body;
         if (!seasonId || !weekNumber || !name) return res.status(400).json({ error: 'seasonId, weekNumber, and name required' });
@@ -226,12 +275,12 @@ router.post('/rename-tournament', adminAuth, async (req, res) => {
         res.json({ success: true, updated: result.rowCount });
     } catch (err) {
         console.error('Rename tournament error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Clear a season's tournament data (placements, sets, games, tournaments) so it can be re-synced
-router.post('/clear-season', adminAuth, async (req, res) => {
+router.post('/clear-season', adminAuth, async (req, res, next) => {
     try {
         const { seasonId } = req.body;
         if (!seasonId) return res.status(400).json({ error: 'seasonId required' });
@@ -249,12 +298,12 @@ router.post('/clear-season', adminAuth, async (req, res) => {
         res.json({ success: true, tournamentsCleared: ids.length });
     } catch (err) {
         console.error('Clear season error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Sync trigger
-router.post('/sync', adminAuth, async (req, res) => {
+router.post('/sync', adminAuth, async (req, res, next) => {
     try {
         const { tournamentSlug, seasonId, weekNumber, eventName, useMultiplier, attendancePoint } = req.body;
         const options = {
@@ -268,12 +317,12 @@ router.post('/sync', adminAuth, async (req, res) => {
         res.json({ success: true, result });
     } catch (err) {
         console.error('Sync error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Add sponsor
-router.post('/sponsors', adminAuth, upload.single('logo'), async (req, res) => {
+router.post('/sponsors', adminAuth, uploadLogo, async (req, res, next) => {
     try {
         const { name, website_url, display_order } = req.body;
         const logo_url = `/img/sponsors/${req.file.filename}`;
@@ -281,15 +330,15 @@ router.post('/sponsors', adminAuth, upload.single('logo'), async (req, res) => {
             'INSERT INTO sponsors (name, logo_url, website_url, display_order) VALUES ($1, $2, $3, $4)',
             [name, logo_url, website_url || null, parseInt(display_order) || 0]
         );
-        res.redirect(`/admin?secret=${process.env.ADMIN_SECRET}`);
+        res.redirect('/admin');
     } catch (err) {
         console.error('Add sponsor error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // One-time migration from Google Sheets
-router.post('/migrate', adminAuth, async (req, res) => {
+router.post('/migrate', adminAuth, async (req, res, next) => {
     try {
         // Check if data already exists
         const check = await pool.query('SELECT COUNT(*) FROM seasons');
@@ -377,18 +426,18 @@ router.post('/migrate', adminAuth, async (req, res) => {
         res.json({ success: true, seasons: seasons.length, message: 'Migration complete' });
     } catch (err) {
         console.error('Migration error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 
 // Delete sponsor
-router.post('/sponsors/:id/delete', adminAuth, async (req, res) => {
+router.post('/sponsors/:id/delete', adminAuth, async (req, res, next) => {
     try {
         await pool.query('DELETE FROM sponsors WHERE id = $1', [req.params.id]);
-        res.redirect(`/admin?secret=${process.env.ADMIN_SECRET}`);
+        res.redirect('/admin');
     } catch (err) {
         console.error('Delete sponsor error:', err);
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 });
 

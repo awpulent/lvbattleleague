@@ -1,0 +1,18 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+
+<h2 class="section-title">Admin Login</h2>
+<div class="rankings-table" style="margin-bottom: 40px;">
+    <div style="padding: 20px 30px;">
+        <% if (error) { %>
+            <p style="color: var(--secondary); font-weight: 600; margin-bottom: 15px;"><%= error %></p>
+        <% } %>
+        <form action="/admin/login" method="POST" style="display: flex; flex-direction: column; gap: 15px; max-width: 400px;">
+            <label style="color: var(--primary); font-weight: 600; display: block; margin-bottom: 5px;">Admin Secret</label>
+            <input type="password" name="adminSecret" required autofocus autocomplete="current-password"
+                style="width: 100%; padding: 10px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+            <button type="submit" class="season-btn active" style="cursor: pointer; border: none;">Log In</button>
+        </form>
+    </div>
+</div>
+<%- include('partials/foot') %>

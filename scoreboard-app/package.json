@@ -6,7 +6,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "npx electron-builder --win portable"
+    "build": "npm ci && npx electron-builder --win portable"
   },
   "dependencies": {
     "express": "^5.2.1"

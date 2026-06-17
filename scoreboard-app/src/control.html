@@ -245,10 +245,8 @@
     </div>
 
     <script>
-        const { ipcRenderer } = require('electron');
-
-        const config = ipcRenderer.sendSync('get-config');
-        const obsUrl = ipcRenderer.sendSync('get-overlay-url');
+        const config = window.lvbl.getConfig();
+        const obsUrl = window.lvbl.getOverlayUrl();
         document.getElementById('obsUrl').value = obsUrl;
 
         let searchTimeout;
@@ -262,7 +260,7 @@
                 p2Score: document.getElementById('p2Score').value,
                 round: document.getElementById('round').value
             };
-            ipcRenderer.send('update-state', state);
+            window.lvbl.updateState(state);
         }
 
         // Autocomplete search
@@ -272,7 +270,9 @@
                 return;
             }
             try {
-                const res = await fetch(`${config.apiUrl}/api/players/search?name=${encodeURIComponent(query)}&key=${config.apiKey}`);
+                const res = await fetch(`${config.apiUrl}/api/players/search?name=${encodeURIComponent(query)}`, {
+                    headers: { 'Authorization': `Bearer ${config.apiKey}` }
+                });
                 if (!res.ok) return;
                 const players = await res.json();
                 const list = document.getElementById(listId);
@@ -280,9 +280,16 @@
                     list.classList.remove('visible');
                     return;
                 }
-                list.innerHTML = players.map(p =>
-                    `<div class="autocomplete-item" data-name="${p.display_name}">${p.display_name}</div>`
-                ).join('');
+                // Build items with textContent/dataset so an attacker-chosen gamerTag
+                // cannot inject markup (no innerHTML of untrusted data).
+                list.replaceChildren();
+                for (const p of players) {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
+                    div.dataset.name = p.display_name;
+                    div.textContent = p.display_name;
+                    list.appendChild(div);
+                }
                 list.classList.add('visible');
 
                 list.querySelectorAll('.autocomplete-item').forEach(item => {
@@ -358,7 +365,7 @@
         }
 
         function openSetup() {
-            ipcRenderer.send('open-setup');
+            window.lvbl.openSetup();
         }
 
         // Connection check
@@ -366,7 +373,9 @@
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
             try {
-                const res = await fetch(`${config.apiUrl}/api/players/search?name=test&key=${config.apiKey}`);
+                const res = await fetch(`${config.apiUrl}/api/players/search?name=test`, {
+                    headers: { 'Authorization': `Bearer ${config.apiKey}` }
+                });
                 if (res.ok) {
                     dot.className = 'status-dot connected';
                     text.textContent = 'Connected';
