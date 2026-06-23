@@ -25,6 +25,7 @@ const indexRoutes = require('./routes/index');
 const playerRoutes = require('./routes/player');
 const adminRoutes = require('./routes/admin');
 const apiRoutes = require('./routes/api');
+const raffleRoutes = require('./routes/raffle');
 const adminLimiter = require('./middleware/admin-limit');
 
 const app = express();
@@ -64,6 +65,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRoutes);
 app.use('/player', playerRoutes);
 app.use('/admin', adminLimiter, adminRoutes);
+app.use('/raffle', raffleRoutes);
 app.use('/api', apiRoutes);
 
 // 404 — after all routes.
