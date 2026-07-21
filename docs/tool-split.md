@@ -168,22 +168,40 @@ Set it as `MCP_API_TOKEN` in the App Platform dashboard. Leave it unset and
 | `oauth_cimd` | OAuth 2.0 + Client ID Metadata Document | Out of the box |
 | `none` | Authless | Not appropriate here |
 
-The server implements `static_headers` — it validates a bearer token, which is
-all that mode requires.
+**Status as of 2026-07-21: blocked on Anthropic.** The Add custom connector
+dialog offers only Name, Remote server URL, and Advanced settings (OAuth Client
+ID / Secret). There is no **Request headers** section, so `static_headers` is not
+enabled on this account — it's in beta with a gated rollout.
 
-In Cowork: **Settings → Connectors → Add custom connector**. URL
-`https://lvbattleleague.com/mcp`. Open **Request headers**, choose
-`authorization`, and enter `Bearer <your MCP_API_TOKEN>` — **including the word
-`Bearer` and the space**, because Claude sends the value verbatim and adds no
-scheme of its own.
+Early access has been requested from `mcp-review@anthropic.com`. The server
+already implements that mode (bearer token, `401` + `WWW-Authenticate`), so if
+it's enabled the connector works with no further code: choose header
+`authorization` and enter `Bearer <MCP_API_TOKEN>`, **including the word `Bearer`
+and the space** — Claude sends the value verbatim and adds no scheme.
 
-**If there's no Request headers section in that dialog**, `static_headers` isn't
-enabled for your account — it's in beta with a gated rollout. The fallback is
-`oauth_dcr`, which is a genuinely bigger build: discovery metadata, a
-`registration_endpoint`, S256 PKCE, a form-urlencoded token endpoint,
-refresh-token rotation, and a `401` carrying
-`WWW-Authenticate: Bearer resource_metadata="..."`. The tool layer in
-`mcp/tools.js` wouldn't change — only `mcp/index.js` auth.
+### Fallback: OAuth with pre-registered credentials
+
+If early access is declined, the Advanced settings fields are the path. Anthropic
+accepts "a `registration_endpoint` (DCR), `client_id_metadata_document_supported:
+true` (CIMD), **or** pre-registered credentials" — so supplying a client ID and
+secret there means **neither DCR nor CIMD is needed**, which removes the largest
+part of the build.
+
+What would still have to be built:
+
+| Piece | Detail |
+|---|---|
+| Protected resource metadata | `/.well-known/oauth-protected-resource/mcp` and the unsuffixed path |
+| Auth server metadata | `/.well-known/oauth-authorization-server`, advertising `code_challenge_methods_supported: ["S256"]` |
+| `/oauth/authorize` | Consent + authorization code, bound to the PKCE challenge and the `resource` value |
+| `/oauth/token` | `authorization_code` and `refresh_token` grants, form-urlencoded, verifies PKCE and client secret |
+| `401` change | Add `resource_metadata="…"` to the `WWW-Authenticate` header |
+| Token storage | A migration — in-memory tokens would force a reconnect after every deploy |
+
+Consent can reuse the existing admin login, so there's no user system to build.
+`mcp/tools.js` wouldn't change at all; this is entirely `mcp/index.js` plus new
+routes. Keep `MCP_API_TOKEN` working alongside it so a broken OAuth flow can't
+lock the operator out.
 
 Never put the token in the connector URL. The MCP spec prohibits it and URLs leak
 through logs and history.
