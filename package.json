@@ -11,6 +11,7 @@
   },
   "description": "LV Battle League - Street Fighter local rankings",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
     "ejs": "^5.0.1",

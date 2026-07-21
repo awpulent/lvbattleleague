@@ -18,6 +18,11 @@ if (!process.env.ADMIN_SECRET) {
 if (process.env.OVERLAY_API_KEY && process.env.OVERLAY_API_KEY.length < 16) {
     console.warn(`[security] OVERLAY_API_KEY is only ${process.env.OVERLAY_API_KEY.length} chars; consider a longer random value.`);
 }
+if (!process.env.MCP_API_TOKEN) {
+    console.warn('[security] MCP_API_TOKEN is not set — /mcp will reject all requests. Unset it deliberately to disable the Cowork connector.');
+} else if (process.env.MCP_API_TOKEN.length < 24) {
+    console.warn(`[security] MCP_API_TOKEN is only ${process.env.MCP_API_TOKEN.length} chars. Use a 24+ char random value.`);
+}
 
 const pool = require('./db/pool');
 
@@ -26,6 +31,7 @@ const playerRoutes = require('./routes/player');
 const adminRoutes = require('./routes/admin');
 const apiRoutes = require('./routes/api');
 const raffleRoutes = require('./routes/raffle');
+const mcpRoutes = require('./mcp');
 const adminLimiter = require('./middleware/admin-limit');
 
 const app = express();
@@ -66,6 +72,7 @@ app.use('/', indexRoutes);
 app.use('/player', playerRoutes);
 app.use('/admin', adminLimiter, adminRoutes);
 app.use('/raffle', raffleRoutes);
+app.use('/mcp', mcpRoutes);
 app.use('/api', apiRoutes);
 
 // 404 — after all routes.

@@ -5,3 +5,12 @@ public/img/sponsors/*
 
 # Local security review artifacts (not committed)
 security/
+
+# Electron build output
+scoreboard-app/dist/
+
+# Built Cowork skill packages
+skills/dist/
+
+# Local overlay test fixtures (mirrors .dockerignore)
+overlay/test_*.json
