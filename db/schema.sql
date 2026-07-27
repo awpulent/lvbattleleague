@@ -72,6 +72,11 @@ CREATE TABLE sponsors (
     is_active       BOOLEAN DEFAULT TRUE
 );
 
+-- Presenting sponsor for a season. Declared here rather than on the seasons
+-- table above because sponsors is created after it.
+ALTER TABLE seasons ADD COLUMN sponsor_id INTEGER
+    REFERENCES sponsors(id) ON DELETE SET NULL;
+
 -- Indexes
 CREATE INDEX idx_placements_player ON placements(player_id);
 CREATE INDEX idx_placements_tournament ON placements(tournament_id);

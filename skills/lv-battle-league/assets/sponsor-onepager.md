@@ -16,7 +16,8 @@ at lvbattleleague.com.
 ## What a sponsor gets
 
 - Logo on the stream overlay, on screen during every match
-- Logo and link in the sponsors block on lvbattleleague.com
+- Sole "this season proudly sponsored by" billing on lvbattleleague.com — logo,
+  name, and link, no other sponsor shares the block
 - Named callouts during the broadcast
 - {Prize table placement, product placement, whatever applies}
 

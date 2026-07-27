@@ -149,7 +149,31 @@ Get the ID and icon URL from start.gg's `videogame` GraphQL query. Without step
 
 ## Sponsors
 
+Each season shows exactly one presenting sponsor, rendered under a "proudly
+sponsored by" heading below the season selector. This is two steps: register the
+sponsor, then point a season at it.
+
 Upload logos through the `/admin` page rather than by hand. Uploads are capped at
 2 MB, restricted to png/jpg/webp/gif by both MIME type and extension, and land in
 `public/img/sponsors/` — which is gitignored, so logos live only on the deployed
 volume. Re-uploading after a rebuild may be necessary.
+
+Registering a sponsor does not put it on the site. Assign it to a season by ID —
+the `/admin` page lists both sponsor and season IDs:
+
+```bash
+curl -X POST https://lvbattleleague.com/admin/update-season \
+  -H "Authorization: Bearer $ADMIN_SECRET_PROD" \
+  -H "Content-Type: application/json" \
+  -d '{"seasonId": 3, "sponsorId": 2}'
+```
+
+`"sponsorId": null` clears it, and the block disappears from that season. A
+sponsor can present more than one season without re-uploading its logo — point
+each season at the same ID.
+
+Sponsors are a registry, not a per-season record: deleting one nulls out every
+season pointing at it (`ON DELETE SET NULL`), so a sponsor that presented a past
+season should be left in place rather than deleted. The `is_active` and
+`display_order` columns are leftovers from the old all-seasons logo bar and no
+longer affect rendering.

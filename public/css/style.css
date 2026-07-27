@@ -116,27 +116,63 @@ header {
     fill: var(--primary);
 }
 
-/* Sponsors */
-.sponsors-bar {
+/* Season Sponsor */
+.season-sponsor {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    gap: 30px;
-    margin-bottom: 40px;
-    flex-wrap: wrap;
-    padding: 15px 0;
+    gap: 20px;
+    margin-bottom: 50px;
+    padding: 35px 30px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--primary);
+    text-align: center;
 }
 
-.sponsor-logo {
-    height: 50px;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-    filter: grayscale(30%);
+.season-sponsor-label {
+    margin: 0;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
 }
 
-.sponsor-logo:hover {
-    opacity: 1;
-    filter: grayscale(0%);
+.season-sponsor-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.3s ease;
+}
+
+a.season-sponsor-link:hover {
+    transform: translateY(-3px);
+}
+
+.season-sponsor-logo {
+    max-height: 110px;
+    max-width: 100%;
+}
+
+.season-sponsor-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.season-sponsor-url {
+    font-size: 0.9rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+}
+
+a.season-sponsor-link:hover .season-sponsor-url {
+    text-decoration: underline;
 }
 
 /* Season Selector */
@@ -723,11 +759,21 @@ tbody tr:hover {
         font-size: 1.4rem;
     }
 
-    .sponsors-bar {
-        gap: 15px;
+    .season-sponsor {
+        padding: 25px 20px;
+        margin-bottom: 35px;
     }
 
-    .sponsor-logo {
-        height: 35px;
+    .season-sponsor-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+    }
+
+    .season-sponsor-logo {
+        max-height: 75px;
+    }
+
+    .season-sponsor-name {
+        font-size: 1.2rem;
     }
 }

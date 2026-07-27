@@ -11,7 +11,7 @@ Live at **lvbattleleague.com** (DigitalOcean App Platform).
 
 | Surface | Path | What it is |
 |---|---|---|
-| Public site | `/` | Season standings, week-by-week results, sponsors |
+| Public site | `/` | Season standings, week-by-week results, the season's presenting sponsor |
 | Player pages | `/player/:id` | Record, win rate, head-to-head, character usage, match history |
 | Admin | `/admin` | Sync tournaments, manage seasons, merge duplicate players, upload sponsor logos |
 | Raffle | `/raffle` | Points-weighted prize draw, runs client-side so it survives venue wifi dropping |

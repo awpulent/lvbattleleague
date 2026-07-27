@@ -40,14 +40,13 @@ can't exhaust connections.
 Eight tables, created in `migrations/001_initial_schema.js`.
 
 ```
-seasons ──< tournaments ──< placements >── players
-                  │                          │  ^
-                  └──< sets ──< games        │  │
-                        │  │                 │  │
-                        └──┴─────────────────┘  │
-                                                │
-                          player_aliases ───────┘
-sponsors  (standalone)
+sponsors >── seasons ──< tournaments ──< placements >── players
+                              │                          │  ^
+                              └──< sets ──< games        │  │
+                                    │  │                 │  │
+                                    └──┴─────────────────┘  │
+                                                            │
+                                      player_aliases ───────┘
 ```
 
 **`players`** — `startgg_id` is unique but nullable. Rows imported from the old
@@ -69,6 +68,12 @@ derived by joining back to `sets`. That shape is why `getCharacterUsage()` in
 Points are stored, not computed on read. See [`scoring.md`](scoring.md).
 
 **`seasons.drop_worst_week`** — added in migration 002, default true.
+
+**`seasons.sponsor_id`** — added in migration 003, nullable. The season's
+presenting sponsor; one per season, null means no sponsor block renders.
+`ON DELETE SET NULL`, so deleting a sponsor row detaches it from every season
+rather than failing. `sponsors.is_active` and `sponsors.display_order` predate
+this and no longer affect rendering.
 
 `db/schema.sql` is only used to seed the docker-compose Postgres container.
 Migrations are the source of truth for schema changes.

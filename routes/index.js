@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { getSeasons, getActiveSeason, getStandings, getWeekResults, getSeasonStats } = require('../queries/standings');
-const pool = require('../db/pool');
+const { getSeasonSponsor } = require('../queries/sponsors');
 
 router.get('/', async (req, res) => {
     try {
         const seasons = await getSeasons();
         if (!seasons.length) {
-            return res.render('home', { seasons: [], currentSeason: null, standings: [], weeks: {}, stats: null, sponsors: [] });
+            return res.render('home', { seasons: [], currentSeason: null, standings: [], weeks: {}, stats: null, sponsor: null });
         }
 
         // Determine current season: query param or active/most recent
@@ -18,11 +18,11 @@ router.get('/', async (req, res) => {
             currentSeason = seasons.find(s => s.is_active) || seasons[0];
         }
 
-        const [standings, weeks, stats, sponsors] = await Promise.all([
+        const [standings, weeks, stats, sponsor] = await Promise.all([
             getStandings(currentSeason.id, currentSeason.drop_worst_week),
             getWeekResults(currentSeason.id),
             getSeasonStats(currentSeason.id, currentSeason.drop_worst_week),
-            pool.query('SELECT * FROM sponsors WHERE is_active = true ORDER BY display_order ASC')
+            getSeasonSponsor(currentSeason.id)
         ]);
 
         res.render('home', {
@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
             standings,
             weeks,
             stats,
-            sponsors: sponsors.rows
+            sponsor
         });
     } catch (err) {
         console.error('Home page error:', err);
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
             standings: [],
             weeks: {},
             stats: null,
-            sponsors: [],
+            sponsor: null,
             error: 'Failed to load rankings data.'
         });
     }

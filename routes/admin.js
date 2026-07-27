@@ -5,6 +5,7 @@ const path = require('path');
 const adminAuth = require('../middleware/auth');
 const safeEqual = require('../middleware/safe-equal');
 const pool = require('../db/pool');
+const { getSponsorsWithSeasons } = require('../queries/sponsors');
 
 // --- Auth: cookie-based login so the admin secret never travels in a URL ---
 router.get('/login', (req, res) => {
@@ -69,8 +70,8 @@ function uploadLogo(req, res, next) {
 router.get('/', adminAuth, async (req, res, next) => {
     try {
         const seasons = await pool.query('SELECT * FROM seasons ORDER BY id DESC');
-        const sponsors = await pool.query('SELECT * FROM sponsors ORDER BY display_order ASC');
-        res.render('admin', { seasons: seasons.rows, sponsors: sponsors.rows });
+        const sponsors = await getSponsorsWithSeasons();
+        res.render('admin', { seasons: seasons.rows, sponsors });
     } catch (err) {
         console.error('Admin page error:', err);
         res.status(500).json({ error: 'Failed to load admin page' });
@@ -189,7 +190,7 @@ router.post('/create-season', adminAuth, async (req, res, next) => {
 // Update per-season settings (dropWorstWeek, isActive, etc.)
 router.post('/update-season', adminAuth, async (req, res, next) => {
     try {
-        const { seasonId, dropWorstWeek, isActive } = req.body;
+        const { seasonId, dropWorstWeek, isActive, sponsorId } = req.body;
         if (!seasonId) return res.status(400).json({ error: 'seasonId required' });
 
         const updates = [];
@@ -203,12 +204,28 @@ router.post('/update-season', adminAuth, async (req, res, next) => {
             updates.push(`is_active = $${values.length + 1}`);
             values.push(isActive === true || isActive === 'true');
         }
+        // sponsorId: null or "" clears the season's presenting sponsor.
+        if (sponsorId !== undefined) {
+            let sponsor = null;
+            if (sponsorId !== null && sponsorId !== '') {
+                sponsor = parseInt(sponsorId);
+                if (Number.isNaN(sponsor)) {
+                    return res.status(400).json({ error: 'sponsorId must be an integer or null' });
+                }
+                const exists = await pool.query('SELECT 1 FROM sponsors WHERE id = $1', [sponsor]);
+                if (!exists.rows.length) {
+                    return res.status(404).json({ error: `Sponsor ${sponsor} not found` });
+                }
+            }
+            updates.push(`sponsor_id = $${values.length + 1}`);
+            values.push(sponsor);
+        }
 
         if (!updates.length) return res.status(400).json({ error: 'no fields to update' });
 
         values.push(parseInt(seasonId));
         const { rows } = await pool.query(
-            `UPDATE seasons SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING id, name, is_active, drop_worst_week`,
+            `UPDATE seasons SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING id, name, is_active, drop_worst_week, sponsor_id`,
             values
         );
         if (!rows.length) return res.status(404).json({ error: `Season ${seasonId} not found` });
@@ -324,11 +341,13 @@ router.post('/sync', adminAuth, async (req, res, next) => {
 // Add sponsor
 router.post('/sponsors', adminAuth, uploadLogo, async (req, res, next) => {
     try {
-        const { name, website_url, display_order } = req.body;
+        const { name, website_url } = req.body;
         const logo_url = `/img/sponsors/${req.file.filename}`;
+        // Adding a sponsor only registers it. Assign it to a season with
+        // POST /update-season { seasonId, sponsorId }.
         await pool.query(
-            'INSERT INTO sponsors (name, logo_url, website_url, display_order) VALUES ($1, $2, $3, $4)',
-            [name, logo_url, website_url || null, parseInt(display_order) || 0]
+            'INSERT INTO sponsors (name, logo_url, website_url) VALUES ($1, $2, $3)',
+            [name, logo_url, website_url || null]
         );
         res.redirect('/admin');
     } catch (err) {

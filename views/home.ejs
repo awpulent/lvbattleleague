@@ -1,8 +1,6 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
 
-<%- include('partials/sponsors', { sponsors }) %>
-
 <% if (seasons.length > 0) { %>
 <div class="season-selector">
     <% seasons.forEach(season => { %>
@@ -13,6 +11,8 @@
     <% }) %>
 </div>
 <% } %>
+
+<%- include('partials/season-sponsor', { sponsor, currentSeason }) %>
 
 <%- include('partials/stats-grid', { stats }) %>
 
