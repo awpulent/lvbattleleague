@@ -8,7 +8,8 @@ const pool = require('../db/pool');
 // them from past seasons they actually did sponsor.
 async function getSeasonSponsor(seasonId) {
     const { rows } = await pool.query(
-        `SELECT s.id, s.name, s.logo_url, s.website_url
+        `SELECT s.id, s.name, s.logo_url, s.website_url,
+                (s.logo_data IS NOT NULL) AS has_logo
          FROM seasons se
          JOIN sponsors s ON s.id = se.sponsor_id
          WHERE se.id = $1`,
@@ -20,7 +21,8 @@ async function getSeasonSponsor(seasonId) {
 // Every sponsor plus the seasons each one presents, for the admin page.
 async function getSponsorsWithSeasons() {
     const { rows } = await pool.query(
-        `SELECT s.*,
+        `SELECT s.id, s.name, s.logo_url, s.website_url,
+                (s.logo_data IS NOT NULL) AS has_logo,
                 COALESCE(
                     ARRAY_AGG(se.name ORDER BY se.id) FILTER (WHERE se.id IS NOT NULL),
                     '{}'

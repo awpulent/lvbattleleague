@@ -68,6 +68,8 @@ CREATE TABLE sponsors (
     name            TEXT NOT NULL,
     logo_url        TEXT NOT NULL,
     website_url     TEXT,
+    logo_data       BYTEA,
+    logo_mime       TEXT,
     display_order   INTEGER DEFAULT 0,
     is_active       BOOLEAN DEFAULT TRUE
 );

@@ -6,13 +6,13 @@
     </p>
     <% if (sponsor.website_url) { %>
         <a href="<%= sponsor.website_url %>" target="_blank" rel="noopener" class="season-sponsor-link">
-            <img src="<%= sponsor.logo_url %>" alt="<%= sponsor.name %>" class="season-sponsor-logo">
+            <% if (sponsor.has_logo) { %><img src="<%= sponsor.logo_url %>" alt="<%= sponsor.name %>" class="season-sponsor-logo"><% } %>
             <span class="season-sponsor-name"><%= sponsor.name %></span>
             <span class="season-sponsor-url"><%= sponsor.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '') %></span>
         </a>
     <% } else { %>
         <div class="season-sponsor-link">
-            <img src="<%= sponsor.logo_url %>" alt="<%= sponsor.name %>" class="season-sponsor-logo">
+            <% if (sponsor.has_logo) { %><img src="<%= sponsor.logo_url %>" alt="<%= sponsor.name %>" class="season-sponsor-logo"><% } %>
             <span class="season-sponsor-name"><%= sponsor.name %></span>
         </div>
     <% } %>

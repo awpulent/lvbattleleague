@@ -157,10 +157,13 @@ Each season shows exactly one presenting sponsor, rendered under a "proudly
 sponsored by" heading below the season selector. This is two steps: register the
 sponsor, then point a season at it.
 
-Upload logos through the `/admin` page rather than by hand. Uploads are capped at
-2 MB, restricted to png/jpg/webp/gif by both MIME type and extension, and land in
-`public/img/sponsors/` — which is gitignored, so logos live only on the deployed
-volume. Re-uploading after a rebuild may be necessary.
+Upload logos through the `/admin` page. Uploads are capped at 2 MB and
+restricted to png/jpg/webp/gif by both MIME type and extension. The image is
+stored in the `sponsors` table and served from `/sponsors/<id>/logo`, so it
+survives deploys. (App Platform rebuilds the container filesystem on every push,
+which is why logos used to disappear when they were written under `public/`.)
+"Replace logo" on a sponsor's row swaps the image without touching its id or
+season assignments.
 
 Registering a sponsor does not put it on the site. Assign it from the Seasons
 list on the `/admin` page: pick the sponsor in that season's dropdown and save,

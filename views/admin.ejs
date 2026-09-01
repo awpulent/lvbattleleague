@@ -61,13 +61,24 @@
         <% sponsors.forEach(s => { %>
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid var(--border);">
                 <span style="color: var(--primary); font-weight: 600; min-width: 40px;">#<%= s.id %></span>
-                <img src="<%= s.logo_url %>" alt="<%= s.name %>" style="height: 30px;">
+                <% if (s.has_logo) { %>
+                    <img src="<%= s.logo_url %>" alt="<%= s.name %>" style="height: 30px;">
+                <% } %>
                 <span style="flex: 1;">
                     <%= s.name %>
                     <span style="opacity: 0.7; font-size: 0.9rem;">
                         — <%= s.season_names.length ? `presenting ${s.season_names.join(', ')}` : 'unassigned' %>
                     </span>
+                    <% if (!s.has_logo) { %>
+                        <span style="color: var(--secondary); font-size: 0.85rem; margin-left: 6px;">logo missing — upload one with Replace logo</span>
+                    <% } %>
                 </span>
+                <form action="/admin/sponsors/<%= s.id %>/logo" method="POST" enctype="multipart/form-data"
+                    style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <input type="file" name="logo" accept="image/*" required
+                        style="color: var(--text); font-family: 'Barlow', sans-serif; max-width: 220px;">
+                    <button type="submit" class="season-btn" style="cursor: pointer; padding: 5px 10px;">Replace logo</button>
+                </form>
                 <form action="/admin/sponsors/<%= s.id %>/delete" method="POST" style="margin: 0;">
                     <button type="submit" style="background: var(--secondary); border: none; color: white; padding: 5px 10px; cursor: pointer; font-family: 'Barlow', sans-serif;">Delete</button>
                 </form>

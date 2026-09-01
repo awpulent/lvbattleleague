@@ -33,16 +33,11 @@ router.post('/logout', (req, res) => {
     res.redirect('/admin/login');
 });
 
-// Sponsor logo upload config
-const storage = multer.diskStorage({
-    destination: path.join(__dirname, '..', 'public', 'img', 'sponsors'),
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        const base = path.basename(file.originalname, path.extname(file.originalname))
-            .replace(/[^a-z0-9_-]/gi, '-').toLowerCase().slice(0, 40) || 'logo';
-        cb(null, `${base}-${Date.now()}${ext}`);
-    }
-});
+// Sponsor logo upload config. Logos are buffered in memory and written to the
+// sponsors table (logo_data / logo_mime), never to disk: App Platform rebuilds
+// the container filesystem on every deploy, so a file under public/ vanished
+// with the next push. They are served back by GET /sponsors/:id/logo.
+const storage = multer.memoryStorage();
 
 const ALLOWED_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
@@ -365,13 +360,24 @@ router.post('/sync', adminAuth, async (req, res, next) => {
 router.post('/sponsors', adminAuth, uploadLogo, async (req, res, next) => {
     try {
         const { name, website_url } = req.body;
-        const logo_url = `/img/sponsors/${req.file.filename}`;
-        // Adding a sponsor only registers it. Assign it to a season with
-        // POST /update-season { seasonId, sponsorId }.
-        await pool.query(
-            'INSERT INTO sponsors (name, logo_url, website_url) VALUES ($1, $2, $3)',
-            [name, logo_url, website_url || null]
-        );
+        if (!name || !name.trim()) return res.status(400).json({ error: 'name required' });
+        // Adding a sponsor only registers it. Assign it to a season from the
+        // Seasons list on /admin, or POST /update-season { seasonId, sponsorId }.
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const { rows } = await client.query(
+                'INSERT INTO sponsors (name, logo_url, website_url, logo_data, logo_mime) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+                [name.trim(), '', website_url || null, req.file.buffer, req.file.mimetype]
+            );
+            await client.query('UPDATE sponsors SET logo_url = $1 WHERE id = $2', [`/sponsors/${rows[0].id}/logo`, rows[0].id]);
+            await client.query('COMMIT');
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
         res.redirect('/admin');
     } catch (err) {
         console.error('Add sponsor error:', err);
@@ -468,6 +474,23 @@ router.post('/migrate', adminAuth, async (req, res, next) => {
         res.json({ success: true, seasons: seasons.length, message: 'Migration complete' });
     } catch (err) {
         console.error('Migration error:', err);
+        next(err);
+    }
+});
+
+// Replace a sponsor's logo, keeping its id and season assignments
+router.post('/sponsors/:id/logo', adminAuth, uploadLogo, async (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (Number.isNaN(id)) return res.status(400).json({ error: 'invalid sponsor id' });
+        const { rowCount } = await pool.query(
+            'UPDATE sponsors SET logo_data = $1, logo_mime = $2, logo_url = $3 WHERE id = $4',
+            [req.file.buffer, req.file.mimetype, `/sponsors/${id}/logo`, id]
+        );
+        if (!rowCount) return res.status(404).json({ error: `Sponsor ${id} not found` });
+        res.redirect('/admin');
+    } catch (err) {
+        console.error('Replace logo error:', err);
         next(err);
     }
 });
