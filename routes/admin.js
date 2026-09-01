@@ -223,11 +223,31 @@ router.post('/update-season', adminAuth, async (req, res, next) => {
 
         if (!updates.length) return res.status(400).json({ error: 'no fields to update' });
 
-        values.push(parseInt(seasonId));
-        const { rows } = await pool.query(
-            `UPDATE seasons SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING id, name, is_active, drop_worst_week, sponsor_id`,
-            values
-        );
+        const id = parseInt(seasonId);
+        if (Number.isNaN(id)) return res.status(400).json({ error: 'seasonId must be an integer' });
+        values.push(id);
+
+        // Activating a season deactivates the others in the same transaction,
+        // matching create-season, so there is never more than one active season.
+        const makeActive = isActive === true || isActive === 'true';
+        const client = await pool.connect();
+        let rows;
+        try {
+            await client.query('BEGIN');
+            if (makeActive) {
+                await client.query('UPDATE seasons SET is_active = false WHERE id <> $1', [id]);
+            }
+            ({ rows } = await client.query(
+                `UPDATE seasons SET ${updates.join(', ')} WHERE id = ${values.length} RETURNING id, name, is_active, drop_worst_week, sponsor_id`,
+                values
+            ));
+            await client.query(rows.length ? 'COMMIT' : 'ROLLBACK');
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
         if (!rows.length) return res.status(404).json({ error: `Season ${seasonId} not found` });
         // The /admin Seasons list posts a plain form; send it back to the page.
         // JSON callers (curl, scripts) keep getting the updated row.

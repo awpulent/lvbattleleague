@@ -77,25 +77,43 @@
 
         <h3 style="color: var(--primary); margin: 25px 0 15px;">Seasons</h3>
         <p style="color: var(--text); opacity: 0.7; margin-bottom: 15px; max-width: 700px;">
-            Pick each season's presenting sponsor and save. "No sponsor" clears it
-            and removes the block from that season's page.
+            Each season's presenting sponsor and drop-worst-week setting are saved
+            per row. "No sponsor" clears the sponsor block from that season's page.
+            "Make active" switches the site's default season; only one season is
+            active at a time.
         </p>
         <% seasons.forEach(s => { %>
-            <form action="/admin/update-season" method="POST"
-                style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid var(--border);">
-                <input type="hidden" name="seasonId" value="<%= s.id %>">
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid var(--border);">
                 <span style="color: var(--primary); font-weight: 600; min-width: 40px;">#<%= s.id %></span>
-                <span style="flex: 1; min-width: 140px;"><%= s.name %><%= s.is_active ? ' (active)' : '' %></span>
-                <label style="color: var(--primary); font-weight: 600;">Sponsor</label>
-                <select name="sponsorId"
-                    style="padding: 8px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
-                    <option value="" <%= s.sponsor_id ? '' : 'selected' %>>No sponsor</option>
-                    <% sponsors.forEach(sp => { %>
-                        <option value="<%= sp.id %>" <%= s.sponsor_id === sp.id ? 'selected' : '' %>>#<%= sp.id %> <%= sp.name %></option>
-                    <% }) %>
-                </select>
-                <button type="submit" class="season-btn active" style="cursor: pointer; border: none; padding: 8px 16px;">Save</button>
-            </form>
+                <span style="flex: 1; min-width: 140px;">
+                    <%= s.name %>
+                    <% if (s.is_active) { %><span style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-left: 6px;">ACTIVE</span><% } %>
+                </span>
+                <form action="/admin/update-season" method="POST"
+                    style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0;">
+                    <input type="hidden" name="seasonId" value="<%= s.id %>">
+                    <label style="color: var(--primary); font-weight: 600;">Sponsor</label>
+                    <select name="sponsorId" style="padding: 8px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+                        <option value="" <%= s.sponsor_id ? '' : 'selected' %>>No sponsor</option>
+                        <% sponsors.forEach(sp => { %>
+                            <option value="<%= sp.id %>" <%= s.sponsor_id === sp.id ? 'selected' : '' %>>#<%= sp.id %> <%= sp.name %></option>
+                        <% }) %>
+                    </select>
+                    <label style="color: var(--primary); font-weight: 600;">Drop worst week</label>
+                    <select name="dropWorstWeek" style="padding: 8px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+                        <option value="true" <%= s.drop_worst_week ? 'selected' : '' %>>On</option>
+                        <option value="false" <%= s.drop_worst_week ? '' : 'selected' %>>Off</option>
+                    </select>
+                    <button type="submit" class="season-btn active" style="cursor: pointer; border: none; padding: 8px 16px;">Save</button>
+                </form>
+                <% if (!s.is_active) { %>
+                <form action="/admin/update-season" method="POST" style="margin: 0;">
+                    <input type="hidden" name="seasonId" value="<%= s.id %>">
+                    <input type="hidden" name="isActive" value="true">
+                    <button type="submit" class="season-btn" style="cursor: pointer; padding: 8px 16px;">Make active</button>
+                </form>
+                <% } %>
+            </div>
         <% }) %>
     </div>
 </div>
