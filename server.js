@@ -46,7 +46,16 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Security headers first, so they cover every response (static + rendered + API).
 // CORP must be cross-origin so the OBS browser-source overlay can fetch /api JSON.
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+        directives: {
+            // Character icons on player pages come from start.gg's image CDN.
+            // Every other directive stays at helmet's default (self only).
+            'img-src': ["'self'", 'data:', 'https://images.start.gg'],
+        },
+    },
+}));
 
 // Global volumetric rate limit (public pages + admin), keyed on the real client IP.
 app.use(rateLimit({

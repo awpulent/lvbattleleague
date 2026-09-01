@@ -16,7 +16,7 @@ middleware/         auth, rate limits, constant-time compare
 mcp/                MCP server (remote connector for Claude clients)
 migrations/         node-pg-migrate files
 views/              EJS templates and partials
-public/             CSS, JS, character art, sponsor logos
+public/             CSS, JS, character art
 overlay/            OBS browser source (StreamControl-driven)
 scoreboard-app/     Electron app (self-hosted overlay + control UI)
 ```
@@ -75,13 +75,19 @@ presenting sponsor; one per season, null means no sponsor block renders.
 rather than failing. `sponsors.is_active` and `sponsors.display_order` predate
 this and no longer affect rendering.
 
+**`sponsors.logo_data` / `sponsors.logo_mime`** — added in migration 004. The
+logo bytes themselves; `logo_url` points at `/sponsors/:id/logo`, which streams
+them from the database. Stored there rather than under `public/` because App
+Platform rebuilds the container filesystem on every deploy.
+
 `db/schema.sql` is only used to seed the docker-compose Postgres container.
 Migrations are the source of truth for schema changes.
 
 ## Request flow
 
 `server.js` applies, in order: Helmet (with `crossOriginResourcePolicy:
-cross-origin` so the OBS browser source can fetch API JSON), a global 120
+cross-origin` so the OBS browser source can fetch API JSON, and `img-src` opened to
+images.start.gg for the character icons on player pages), a global 120
 req/min limit, CORS headers on `/api`, 32 KB body limits, signed cookies, then
 static files, then routes.
 
