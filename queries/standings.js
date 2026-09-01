@@ -19,7 +19,10 @@ async function getActiveSeason() {
 
 async function getStandings(seasonId, dropWorstWeek = true) {
     const { rows } = await pool.query(`
-        WITH player_scores AS (
+        WITH season_events AS (
+            SELECT COUNT(*) AS event_count FROM tournaments WHERE season_id = $1
+        ),
+        player_scores AS (
             SELECT
                 p.player_id,
                 pl.display_name,
@@ -37,8 +40,15 @@ async function getStandings(seasonId, dropWorstWeek = true) {
             display_name,
             SUM(points) as total_points,
             total_weeks as weeks_attended
-        FROM player_scores
-        WHERE $2 = false OR rn > 1 OR total_weeks = 1
+        FROM player_scores, season_events
+        -- Drop-worst-week: a player's worst week is their lowest score across
+        -- EVERY event in the season, and a missed event counts as 0. So the drop
+        -- only removes a recorded result when the player attended everything.
+        -- A one-event season has nothing to drop.
+        WHERE $2 = false
+           OR rn > 1
+           OR total_weeks < event_count
+           OR event_count = 1
         GROUP BY player_db_id, display_name, total_weeks
         ORDER BY SUM(points) DESC
     `, [seasonId, dropWorstWeek]);

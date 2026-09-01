@@ -4,6 +4,7 @@ const overlayAuth = require('../middleware/overlay-auth');
 const rateLimit = require('../middleware/rate-limit');
 const pool = require('../db/pool');
 const { getOverallRecord, getHeadToHead, getCharacterUsage } = require('../queries/players');
+const { getActiveSeason, getStandings } = require('../queries/standings');
 const { CHARACTER_ICONS } = require('../sync/characters');
 
 // All API routes require overlay key + rate limiting
@@ -56,40 +57,15 @@ router.get('/players/:id/stats', async (req, res) => {
         const losses = parseInt(record.losses);
         const winrate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : '0.0';
 
-        // Get current season rank
-        const rankResult = await pool.query(`
-            WITH season AS (
-                SELECT id FROM seasons WHERE is_active = true
-                UNION ALL
-                SELECT id FROM seasons ORDER BY id DESC LIMIT 1
-            ),
-            player_scores AS (
-                SELECT
-                    p.player_id,
-                    p.points,
-                    ROW_NUMBER() OVER (PARTITION BY p.player_id ORDER BY p.points ASC) as rn,
-                    COUNT(*) OVER (PARTITION BY p.player_id) as total_weeks
-                FROM placements p
-                JOIN tournaments t ON p.tournament_id = t.id
-                WHERE t.season_id = (SELECT id FROM season LIMIT 1)
-            ),
-            standings AS (
-                SELECT
-                    player_id,
-                    SUM(points) as total_points
-                FROM player_scores
-                WHERE rn > 1 OR total_weeks = 1
-                GROUP BY player_id, total_weeks
-                ORDER BY SUM(points) DESC
-            )
-            SELECT
-                ROW_NUMBER() OVER (ORDER BY total_points DESC) as rank,
-                player_id,
-                total_points
-            FROM standings
-        `);
-
-        const rankRow = rankResult.rows.find(r => r.player_id === playerId);
+        // Current season rank, from the same standings query the public site
+        // uses so drop-worst-week (and the season's setting for it) match.
+        const season = await getActiveSeason();
+        let rankRow = null;
+        if (season) {
+            const standings = await getStandings(season.id, season.drop_worst_week);
+            const idx = standings.findIndex(r => r.player_db_id === playerId);
+            if (idx !== -1) rankRow = { rank: idx + 1, total_points: standings[idx].total_points };
+        }
 
         res.json({
             id: player.id,

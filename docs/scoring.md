@@ -68,8 +68,15 @@ makes weeks incomparable, and there's no automatic re-scoring.
 Each season carries a `drop_worst_week` flag, default **on**. When on, a player's
 single lowest-scoring week is excluded from their season total.
 
-Players with only one recorded week keep it — otherwise attending once would
-score zero and they'd vanish from the standings entirely.
+"Worst week" is measured across **every event in the season**, and an event the
+player didn't attend counts as 0. So the drop only removes a recorded result
+when the player attended every event; anyone who missed at least one event has
+that miss as their worst week and keeps all of their real scores. A player who
+attended 2 of 10 events and scored 1 point at each keeps 2 points, not 1.
+
+Every tournament row in the season counts as an event for this test, including
+monthlies and any extra events synced in the same week. A season with only one
+event has nothing to drop.
 
 The flag is per-season and can be toggled from `/admin` at any time. Standings
 recompute on read, so flipping it takes effect immediately with no re-sync.
