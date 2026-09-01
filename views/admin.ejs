@@ -53,9 +53,7 @@
 
         <p style="color: var(--text); opacity: 0.7; margin-bottom: 20px; max-width: 700px;">
             Adding a sponsor only registers it. Each season shows one presenting
-            sponsor — assign it by ID with
-            <code>POST /admin/update-season { seasonId, sponsorId }</code>.
-            Pass <code>sponsorId: null</code> to clear it.
+            sponsor — assign it in the Seasons list below.
         </p>
 
         <% if (sponsors.length > 0) { %>
@@ -78,11 +76,26 @@
         <% } %>
 
         <h3 style="color: var(--primary); margin: 25px 0 15px;">Seasons</h3>
+        <p style="color: var(--text); opacity: 0.7; margin-bottom: 15px; max-width: 700px;">
+            Pick each season's presenting sponsor and save. "No sponsor" clears it
+            and removes the block from that season's page.
+        </p>
         <% seasons.forEach(s => { %>
-            <div style="margin-bottom: 8px; opacity: 0.85;">
-                <span style="color: var(--primary); font-weight: 600;">#<%= s.id %></span>
-                <%= s.name %><%= s.is_active ? ' (active)' : '' %>
-            </div>
+            <form action="/admin/update-season" method="POST"
+                style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 10px; padding: 10px; border: 1px solid var(--border);">
+                <input type="hidden" name="seasonId" value="<%= s.id %>">
+                <span style="color: var(--primary); font-weight: 600; min-width: 40px;">#<%= s.id %></span>
+                <span style="flex: 1; min-width: 140px;"><%= s.name %><%= s.is_active ? ' (active)' : '' %></span>
+                <label style="color: var(--primary); font-weight: 600;">Sponsor</label>
+                <select name="sponsorId"
+                    style="padding: 8px; background: var(--dark); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif;">
+                    <option value="" <%= s.sponsor_id ? '' : 'selected' %>>No sponsor</option>
+                    <% sponsors.forEach(sp => { %>
+                        <option value="<%= sp.id %>" <%= s.sponsor_id === sp.id ? 'selected' : '' %>>#<%= sp.id %> <%= sp.name %></option>
+                    <% }) %>
+                </select>
+                <button type="submit" class="season-btn active" style="cursor: pointer; border: none; padding: 8px 16px;">Save</button>
+            </form>
         <% }) %>
     </div>
 </div>

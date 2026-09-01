@@ -229,6 +229,9 @@ router.post('/update-season', adminAuth, async (req, res, next) => {
             values
         );
         if (!rows.length) return res.status(404).json({ error: `Season ${seasonId} not found` });
+        // The /admin Seasons list posts a plain form; send it back to the page.
+        // JSON callers (curl, scripts) keep getting the updated row.
+        if (req.is('application/x-www-form-urlencoded')) return res.redirect('/admin');
         res.json({ success: true, season: rows[0] });
     } catch (err) {
         console.error('Update season error:', err);

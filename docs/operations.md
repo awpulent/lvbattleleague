@@ -158,8 +158,9 @@ Upload logos through the `/admin` page rather than by hand. Uploads are capped a
 `public/img/sponsors/` — which is gitignored, so logos live only on the deployed
 volume. Re-uploading after a rebuild may be necessary.
 
-Registering a sponsor does not put it on the site. Assign it to a season by ID —
-the `/admin` page lists both sponsor and season IDs:
+Registering a sponsor does not put it on the site. Assign it from the Seasons
+list on the `/admin` page: pick the sponsor in that season's dropdown and save,
+or choose "No sponsor" to clear it. The same thing by hand:
 
 ```bash
 curl -X POST https://lvbattleleague.com/admin/update-season \
