@@ -19,7 +19,7 @@ if (process.env.OVERLAY_API_KEY && process.env.OVERLAY_API_KEY.length < 16) {
     console.warn(`[security] OVERLAY_API_KEY is only ${process.env.OVERLAY_API_KEY.length} chars; consider a longer random value.`);
 }
 if (!process.env.MCP_API_TOKEN) {
-    console.warn('[security] MCP_API_TOKEN is not set — /mcp will reject all requests. Unset it deliberately to disable the Cowork connector.');
+    console.warn('[security] MCP_API_TOKEN is not set — /mcp will reject all requests. Unset it deliberately to disable the MCP connector.');
 } else if (process.env.MCP_API_TOKEN.length < 24) {
     console.warn(`[security] MCP_API_TOKEN is only ${process.env.MCP_API_TOKEN.length} chars. Use a 24+ char random value.`);
 }

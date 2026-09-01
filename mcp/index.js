@@ -4,7 +4,7 @@ const safeEqual = require('../middleware/safe-equal');
 const crypto = require('crypto');
 const { listing, byName, ToolError } = require('./tools');
 
-// LVBL MCP server — lets Claude Cowork run the weekly tournament sync and read
+// LVBL MCP server — lets a Claude MCP client run the weekly tournament sync and read
 // standings from any surface, without the operator's admin secret ever leaving
 // this process.
 //

@@ -13,7 +13,7 @@ queries/            SQL for reads (standings, players, tournaments)
 sync/               start.gg ingest, scoring, character maps
 db/                 pool, connection config, one-off scripts
 middleware/         auth, rate limits, constant-time compare
-mcp/                MCP server for the Cowork connector
+mcp/                MCP server (remote connector for Claude clients)
 migrations/         node-pg-migrate files
 views/              EJS templates and partials
 public/             CSS, JS, character art, sponsor logos
@@ -106,7 +106,7 @@ grow it without limit.
 **Overlay** (`middleware/overlay-auth.js`) gates `/api`. Header only:
 `Authorization: Bearer <OVERLAY_API_KEY>`. There is no query-string fallback.
 
-**MCP** (`mcp/index.js`) gates `/mcp`, the Claude Cowork connector. Header only:
+**MCP** (`mcp/index.js`) gates `/mcp`, the MCP connector. Header only:
 `Authorization: Bearer <MCP_API_TOKEN>`. Returns 503 when the token isn't
 configured, so an unset variable disables the endpoint rather than opening it.
 
@@ -120,8 +120,8 @@ header, and 10 failed attempts per 15 minutes on `/admin`
 
 ## MCP server
 
-`mcp/` serves a Model Context Protocol endpoint at `/mcp` so Claude Cowork can
-run the weekly sync and read standings from any surface. It runs in-process, so
+`mcp/` serves a Model Context Protocol endpoint at `/mcp` so a Claude MCP client
+can run the weekly sync and read standings from any surface. It runs in-process, so
 its tools call `sync/ingest.js` and `queries/` directly rather than looping back
 through HTTP — `ADMIN_SECRET` is never involved.
 
@@ -137,7 +137,7 @@ Jobs are in-memory and lost on restart — acceptable because sync is idempotent
 Tool scope is deliberately narrow. `clear-season`, `merge-players`, and
 `multiply-points` are not exposed: no undo, so they stay on the admin surface.
 
-See [`tool-split.md`](tool-split.md) for how this fits the Cowork split.
+See [`mcp.md`](mcp.md) for the tools, token setup, and connecting a client.
 
 ## start.gg ingest
 

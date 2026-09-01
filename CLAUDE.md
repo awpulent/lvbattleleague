@@ -6,24 +6,15 @@ lvbattleleague.com.
 
 ## Scope of this repo
 
-**This repo is the site.** Code, schema, config, builds, deploys. League
-operations — weekly event sync, recaps, sponsor material — happen in Cowork,
-against `~/projects/lvbl-league`. Full boundary in
-[`docs/tool-split.md`](docs/tool-split.md).
-
-The rule: changes what the site *is* → here. Records what the league *did* →
-Cowork.
-
-**Never open `~/projects/lvbl-league` from Claude Code.** It's Cowork's folder;
-crossing over is what collapses the split.
+**This repo is the site, and league operations run from here too.** Code,
+schema, config, builds, deploys, plus the weekly sync, season admin, and the
+raffle — through `/admin`, `tools/sync-tournament.ps1`, or the MCP endpoint
+(see [`docs/mcp.md`](docs/mcp.md)). There is no separate Cowork skill or ops
+folder any more; this repo and its docs are the single source of truth.
 
 Destructive league admin (`clear-season`, `merge-players`, `multiply-points`)
-stays here deliberately — no undo, so it runs from a machine you control.
-
-Cowork does not read this `CLAUDE.md`, and does not read `~/.claude`. Its context
-comes from the account-level skill in `skills/lv-battle-league/`. After changing
-scoring rules or league workflows, rebuild with `./skills/build.sh` and
-re-upload — the repo stays the source of truth.
+has no undo, so run it from a machine you control, never from a chat surface on
+a phone.
 
 ## Read these before changing things
 
@@ -56,8 +47,9 @@ rejecting everything and `/api` returning 401.
 ## Conventions
 
 - Reads go in `queries/`, writes to tournament data go in `sync/`. Keep the split.
-- `mcp/tools.js` is the Cowork connector's entire surface. Adding a tool there
-  gives Cowork a new capability — keep destructive operations out, and set
+- `mcp/tools.js` is the MCP connector's entire surface. Adding a tool there
+  gives any connected Claude client a new capability — keep destructive
+  operations out, and set
   `readOnlyHint`/`destructiveHint` on everything.
 - Parameterized SQL only. No string interpolation into queries, anywhere.
 - Secrets travel in the `Authorization` header, never the query string. This was

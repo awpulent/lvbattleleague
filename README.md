@@ -16,7 +16,7 @@ Live at **lvbattleleague.com** (DigitalOcean App Platform).
 | Admin | `/admin` | Sync tournaments, manage seasons, merge duplicate players, upload sponsor logos |
 | Raffle | `/raffle` | Points-weighted prize draw, runs client-side so it survives venue wifi dropping |
 | Overlay API | `/api` | JSON for the stream overlay — player search, stats, head-to-head |
-| MCP endpoint | `/mcp` | Lets Claude Cowork run the weekly sync and read standings |
+| MCP endpoint | `/mcp` | Lets a Claude MCP client run the weekly sync and read standings |
 | Scoreboard app | `scoreboard-app/` | Electron app that drives the OBS overlay from a laptop at the venue |
 
 ## Stack
@@ -46,7 +46,7 @@ for a normal boot.
 - [`docs/scoring.md`](docs/scoring.md) — how points are calculated, drop-worst-week
 - [`docs/architecture.md`](docs/architecture.md) — data model, request flow, auth
 - [`docs/operations.md`](docs/operations.md) — running a tournament night, sync, deploys
-- [`docs/tool-split.md`](docs/tool-split.md) — what belongs in Claude Code vs Cowork, and how to set Cowork up
+- [`docs/mcp.md`](docs/mcp.md) — the MCP connector: tools, token, connecting a client
 - [`CLAUDE.md`](CLAUDE.md) — context for Claude Code
 
 ## Environment
@@ -57,7 +57,7 @@ for a normal boot.
 | `STARTGG_API_TOKEN` | start.gg GraphQL API token |
 | `ADMIN_SECRET` | Gates `/admin` and `/raffle`. 16+ random chars |
 | `OVERLAY_API_KEY` | Gates `/api`. 24+ random chars |
-| `MCP_API_TOKEN` | Gates `/mcp`, the Cowork connector. 32+ random chars. Unset disables the endpoint |
+| `MCP_API_TOKEN` | Gates `/mcp`, the MCP connector. 32+ random chars. Unset disables the endpoint |
 | `NODE_ENV` | `production` enables secure cookies |
 | `PORT` | Defaults to 3000 |
 
