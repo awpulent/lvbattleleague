@@ -75,8 +75,10 @@ All of these need `Authorization: Bearer $ADMIN_SECRET_PROD` and
 | Scale a week's points | `POST /admin/multiply-points` | `{"tournamentName":"Week 4","multiplier":2}` |
 | Wipe a season's results | `POST /admin/clear-season` | `{"seasonId":3}` |
 
-The presenting sponsor, drop-worst-week, and the active flag can also be set
-from the Seasons list on the `/admin` page, no curl needed.
+Creating a season, the presenting sponsor, drop-worst-week, and the active
+flag can all be done from the Seasons list on the `/admin` page, no curl
+needed. The create form defaults to making the new season active; a duplicate
+or blank name shows the error inline.
 
 Creating a season with `isActive: true`, or activating one through
 `update-season` or the admin page, deactivates the others in the same

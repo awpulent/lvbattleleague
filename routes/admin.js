@@ -61,12 +61,22 @@ function uploadLogo(req, res, next) {
     });
 }
 
+// Browser form posts (urlencoded) get sent back to the page; curl / JSON
+// callers keep getting JSON. Lets one endpoint serve both.
+function isFormPost(req) {
+    return req.is('application/x-www-form-urlencoded') === 'application/x-www-form-urlencoded';
+}
+
+async function renderAdmin(res, extra = {}) {
+    const seasons = await pool.query('SELECT * FROM seasons ORDER BY id DESC');
+    const sponsors = await getSponsorsWithSeasons();
+    res.render('admin', { seasons: seasons.rows, sponsors, error: null, ...extra });
+}
+
 // Admin page
 router.get('/', adminAuth, async (req, res, next) => {
     try {
-        const seasons = await pool.query('SELECT * FROM seasons ORDER BY id DESC');
-        const sponsors = await getSponsorsWithSeasons();
-        res.render('admin', { seasons: seasons.rows, sponsors });
+        await renderAdmin(res);
     } catch (err) {
         console.error('Admin page error:', err);
         res.status(500).json({ error: 'Failed to load admin page' });
@@ -148,12 +158,19 @@ router.post('/merge-players', adminAuth, async (req, res, next) => {
     }
 });
 
-// Create a new season
+// Create a new season. Accepts JSON (curl) or the form on /admin.
 router.post('/create-season', adminAuth, async (req, res, next) => {
+    const form = isFormPost(req);
+    const fail = (status, message) => {
+        if (form) return renderAdmin(res.status(status), { error: message });
+        return res.status(status).json({ error: message });
+    };
     try {
-        const { name, isActive } = req.body;
-        if (!name) return res.status(400).json({ error: 'name required' });
+        const name = (req.body.name || '').trim();
+        if (!name) return fail(400, 'name required');
+        if (name.length > 80) return fail(400, 'name must be 80 characters or fewer');
 
+        const { isActive } = req.body;
         const makeActive = isActive === true || isActive === 'true';
         const client = await pool.connect();
         try {
@@ -166,6 +183,7 @@ router.post('/create-season', adminAuth, async (req, res, next) => {
                 [name, makeActive]
             );
             await client.query('COMMIT');
+            if (form) return res.redirect('/admin');
             res.json({ success: true, season: result.rows[0] });
         } catch (err) {
             await client.query('ROLLBACK');
@@ -176,7 +194,7 @@ router.post('/create-season', adminAuth, async (req, res, next) => {
     } catch (err) {
         console.error('Create season error:', err);
         if (err.code === '23505') {
-            return res.status(409).json({ error: `Season "${req.body.name}" already exists` });
+            return fail(409, `Season "${req.body.name}" already exists`);
         }
         next(err);
     }
@@ -233,7 +251,7 @@ router.post('/update-season', adminAuth, async (req, res, next) => {
                 await client.query('UPDATE seasons SET is_active = false WHERE id <> $1', [id]);
             }
             ({ rows } = await client.query(
-                `UPDATE seasons SET ${updates.join(', ')} WHERE id = ${values.length} RETURNING id, name, is_active, drop_worst_week, sponsor_id`,
+                `UPDATE seasons SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING id, name, is_active, drop_worst_week, sponsor_id`,
                 values
             ));
             await client.query(rows.length ? 'COMMIT' : 'ROLLBACK');
