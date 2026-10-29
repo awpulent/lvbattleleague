@@ -49,7 +49,10 @@ const CHARACTER_MAP = {
     2699: 'Elena',
     2745: 'Sagat',
     2798: 'C. Viper',
-    2946: 'Alex'
+    2946: 'Alex',
+    3014: 'Ingrid',
+    3229: 'Yasmine',
+    3464: 'Arjun'
 };
 
 // Character name -> icon URL (from start.gg's videogame query)
@@ -83,7 +86,10 @@ const CHARACTER_ICONS = {
     "Elena": "https://images.start.gg/images/character/2699/image-4775f3474a73ff56c3ecb1e70ad09811.png",
     "Sagat": "https://images.start.gg/images/character/2745/image-676c8ad2e4f78862063552f82ccf38b3.png",
     "C. Viper": "https://images.start.gg/images/character/2798/image-234590ca6bf28a72baa21410874bfdce.png",
-    "Alex": "https://images.start.gg/images/character/2946/image-4c3259ffbe946beba5236a7aea7e56f7.png"
+    "Alex": "https://images.start.gg/images/character/2946/image-4c3259ffbe946beba5236a7aea7e56f7.png",
+    "Ingrid": "https://images.start.gg/images/character/3014/image-3e99142ff4a93ee209e56f098e0efa7c.png",
+    "Yasmine": "https://images.start.gg/images/character/3229/image-6c5e1c89848f96ed016d1c1cc64d2566.png",
+    "Arjun": "https://images.start.gg/images/character/3464/image-4bfc5f86993dd01d4ad6388098d55645.png"
 };
 
 // Character name -> banner image (locally hosted screenshots from Capcom)
@@ -144,12 +150,15 @@ function cleanName(name) {
     return String(name || '').replace(/[<>\x00-\x1F\x7F]/g, '').trim().slice(0, 64);
 }
 
-// Only the host the Content Security Policy allows for img-src.
+// Only the host the Content Security Policy allows for img-src. start.gg returns
+// the URL with a signed query string (ehk=...); the bare path serves the same
+// file and is what the static map stores, so the query string is dropped.
+// Image types seen: "icon" (the portrait used here) and "stockIcon".
 function cleanIconUrl(images) {
     if (!Array.isArray(images)) return null;
     const candidates = images.filter(i => typeof i?.url === 'string' && i.url.startsWith('https://images.start.gg/'));
     const icon = candidates.find(i => i.type === 'icon') || candidates[0];
-    return icon ? icon.url : null;
+    return icon ? icon.url.split('?')[0] : null;
 }
 
 let lastRefreshAt = 0;
