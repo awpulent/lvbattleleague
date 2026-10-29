@@ -1,45 +1,7 @@
 const pool = require('../db/pool');
 const { getTournamentEvent, getEventStandings, getEventSets } = require('./startgg-client');
 const { placementToPoints } = require('./points');
-
-// SF6 character ID to name mapping (from start.gg videogame query)
-// Update when new DLC characters are added
-const CHARACTER_MAP = {
-    2271: 'Blanka',
-    2272: 'Cammy',
-    2273: 'Chun-Li',
-    2274: 'Dee Jay',
-    2275: 'Dhalsim',
-    2276: 'E. Honda',
-    2277: 'Guile',
-    2278: 'Jamie',
-    2279: 'JP',
-    2280: 'Juri',
-    2281: 'Ken',
-    2282: 'Kimberly',
-    2283: 'Lily',
-    2284: 'Luke',
-    2285: 'Manon',
-    2286: 'Marisa',
-    2287: 'Ryu',
-    2288: 'Zangief',
-    2314: 'Rashid',
-    2342: 'A.K.I.',
-    2442: 'Ed',
-    2495: 'Akuma',
-    2506: 'M. Bison',
-    2596: 'Terry',
-    2602: 'Random',
-    2616: 'Mai',
-    2699: 'Elena',
-    2745: 'Sagat',
-    2798: 'C. Viper',
-    2946: 'Alex'
-};
-
-function resolveCharacter(selectionValue) {
-    return CHARACTER_MAP[selectionValue] || `Character ${selectionValue}`;
-}
+const { resolveCharacter, refreshCharacters, repairPlaceholderCharacters } = require('./characters');
 
 // Upsert a player by their start.gg ID
 async function upsertPlayer(startggId, gamerTag) {
@@ -105,6 +67,14 @@ async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName, o
         : events.find(e => e.videogame?.name?.toLowerCase().includes('street fighter')) || events[0];
 
     console.log(`Using event: ${event.name} (ID: ${event.id}, ${event.numEntrants} entrants)`);
+
+    // Learn any new DLC characters before reading games, so picks resolve to
+    // names instead of "Character <id>". A failed lookup must not fail the sync.
+    try {
+        await refreshCharacters({ videogameId: event.videogame?.id, force: true });
+    } catch (err) {
+        console.warn(`Character roster refresh failed, using built-in list: ${err.message}`);
+    }
 
     // 2. Create or update tournament record
     const tournamentDate = tournament.startAt ? new Date(tournament.startAt * 1000) : null;
@@ -264,6 +234,13 @@ async function syncTournament(tournamentSlug, seasonId, weekNumber, eventName, o
 
     // Update synced timestamp
     await pool.query('UPDATE tournaments SET synced_at = NOW() WHERE id = $1', [tournamentId]);
+
+    // Earlier weeks may have stored picks of characters we only just learned.
+    try {
+        await repairPlaceholderCharacters();
+    } catch (err) {
+        console.warn(`Character placeholder repair failed: ${err.message}`);
+    }
 
     const summary = {
         tournament: tournament.name,

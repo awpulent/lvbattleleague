@@ -143,15 +143,28 @@ check the Node version first.
 
 ## Adding a new SF6 character
 
-Capcom DLC drops require three edits:
+Names and icons take care of themselves. `refreshCharacters()` in
+`sync/characters.js` pulls the live roster (ID, name, icon URL) from start.gg's
+`videogame` query and merges anything new into `CHARACTER_MAP` and
+`CHARACTER_ICONS`. It runs at the start of every tournament sync and once at
+server startup, and needs `STARTGG_API_TOKEN`; without it, or if start.gg is
+down, the built-in list is used and the sync still completes.
 
-1. `sync/ingest.js` — add the start.gg character ID to `CHARACTER_MAP`
-2. `sync/characters.js` — add the start.gg CDN icon URL to `CHARACTER_ICONS`
-3. `public/img/characters/` — drop in the banner art, then map it in
-   `CHARACTER_BANNERS`
+Games synced before a character was known are stored as `Character <id>`.
+`repairPlaceholderCharacters()` renames those rows after each successful
+refresh, so a week that was synced the day a DLC dropped fixes itself on the
+next sync or deploy. No re-sync needed.
 
-Get the ID and icon URL from start.gg's `videogame` GraphQL query. Without step
-1 the character shows up as "Character 2946" in match history.
+The one manual step is the banner behind the player page header:
+
+1. Drop the art into `public/img/characters/`
+2. Map it in `CHARACTER_BANNERS` in `sync/characters.js`
+
+Until then a player whose main is a new character gets the plain header.
+
+The static maps in `sync/characters.js` are the offline fallback. Adding a new
+character there by hand is optional; copy the ID and icon URL from the same
+`videogame` query if you do.
 
 ## Sponsors
 

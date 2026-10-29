@@ -33,6 +33,7 @@ const apiRoutes = require('./routes/api');
 const raffleRoutes = require('./routes/raffle');
 const mcpRoutes = require('./mcp');
 const adminLimiter = require('./middleware/admin-limit');
+const { refreshCharacters, repairPlaceholderCharacters } = require('./sync/characters');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -120,6 +121,12 @@ async function start() {
     app.listen(PORT, () => {
         console.log(`LV Battle League running on port ${PORT}`);
     });
+
+    // Learn new DLC characters from start.gg in the background so icons and
+    // names on player pages are current without a sync. Skipped when no token.
+    refreshCharacters()
+        .then(result => (result.refreshed ? repairPlaceholderCharacters() : null))
+        .catch(err => console.warn(`Character roster refresh failed, using built-in list: ${err.message}`));
 }
 
 start();

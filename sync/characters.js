@@ -1,6 +1,58 @@
-// SF6 character name to icon URL mapping (from start.gg API)
-// Update when new DLC characters are added
+// SF6 character data.
+//
+// Three maps, all keyed the way start.gg reports them:
+//   CHARACTER_MAP     start.gg selection ID -> display name (used at ingest)
+//   CHARACTER_ICONS   display name -> icon URL on start.gg's CDN (player pages, /api)
+//   CHARACTER_BANNERS display name -> locally hosted banner art (player page header)
+//
+// The static entries below are the baseline the site ships with and the fallback
+// when start.gg is unreachable. refreshCharacters() pulls the live roster from
+// start.gg's `videogame` query and merges new characters into CHARACTER_MAP and
+// CHARACTER_ICONS in place, so a DLC drop no longer needs a code change to be
+// recognised. Only banners still need a local file (see docs/operations.md).
 
+// start.gg videogame ID for Street Fighter 6. The sync path passes the event's
+// own videogame ID, so this constant only matters for the startup refresh.
+const SF6_VIDEOGAME_ID = 43868;
+
+// Refresh at most this often. Sync forces a refresh regardless.
+const REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+// start.gg selection ID -> character name
+const CHARACTER_MAP = {
+    2271: 'Blanka',
+    2272: 'Cammy',
+    2273: 'Chun-Li',
+    2274: 'Dee Jay',
+    2275: 'Dhalsim',
+    2276: 'E. Honda',
+    2277: 'Guile',
+    2278: 'Jamie',
+    2279: 'JP',
+    2280: 'Juri',
+    2281: 'Ken',
+    2282: 'Kimberly',
+    2283: 'Lily',
+    2284: 'Luke',
+    2285: 'Manon',
+    2286: 'Marisa',
+    2287: 'Ryu',
+    2288: 'Zangief',
+    2314: 'Rashid',
+    2342: 'A.K.I.',
+    2442: 'Ed',
+    2495: 'Akuma',
+    2506: 'M. Bison',
+    2596: 'Terry',
+    2602: 'Random',
+    2616: 'Mai',
+    2699: 'Elena',
+    2745: 'Sagat',
+    2798: 'C. Viper',
+    2946: 'Alex'
+};
+
+// Character name -> icon URL (from start.gg's videogame query)
 const CHARACTER_ICONS = {
     "Blanka": "https://images.start.gg/images/character/2271/image-95924a15ed652e225355ad5610cc8b2c.png",
     "Cammy": "https://images.start.gg/images/character/2272/image-485758eb4d57d368d73e99a0c11961aa.png",
@@ -34,7 +86,7 @@ const CHARACTER_ICONS = {
     "Alex": "https://images.start.gg/images/character/2946/image-4c3259ffbe946beba5236a7aea7e56f7.png"
 };
 
-// Character name to banner image (locally hosted screenshots from Capcom)
+// Character name -> banner image (locally hosted screenshots from Capcom)
 const CHARACTER_BANNERS = {
     "Ryu": "/img/characters/ryu.jpg",
     "Ken": "/img/characters/ken.jpg",
@@ -67,6 +119,17 @@ const CHARACTER_BANNERS = {
     "Alex": "/img/characters/alex.jpg"
 };
 
+// Name written to `games` when a selection ID is not in CHARACTER_MAP.
+const PLACEHOLDER_RE = /^Character (\d+)$/;
+
+function placeholderName(selectionValue) {
+    return `Character ${selectionValue}`;
+}
+
+function resolveCharacter(selectionValue) {
+    return CHARACTER_MAP[selectionValue] || placeholderName(selectionValue);
+}
+
 function getCharacterIcon(name) {
     return CHARACTER_ICONS[name] || null;
 }
@@ -75,4 +138,115 @@ function getCharacterBanner(name) {
     return CHARACTER_BANNERS[name] || null;
 }
 
-module.exports = { CHARACTER_ICONS, CHARACTER_BANNERS, getCharacterIcon, getCharacterBanner };
+// Same hygiene as gamertags: a start.gg-controlled string must never carry
+// markup or control characters into the DB or a template.
+function cleanName(name) {
+    return String(name || '').replace(/[<>\x00-\x1F\x7F]/g, '').trim().slice(0, 64);
+}
+
+// Only the host the Content Security Policy allows for img-src.
+function cleanIconUrl(images) {
+    if (!Array.isArray(images)) return null;
+    const candidates = images.filter(i => typeof i?.url === 'string' && i.url.startsWith('https://images.start.gg/'));
+    const icon = candidates.find(i => i.type === 'icon') || candidates[0];
+    return icon ? icon.url : null;
+}
+
+let lastRefreshAt = 0;
+let inflight = null;
+
+// Pull the live roster from start.gg and merge anything new into CHARACTER_MAP
+// and CHARACTER_ICONS. Existing entries are left alone. Never throws for a
+// missing token; network and API errors propagate so callers can log them.
+async function refreshCharacters({ videogameId = SF6_VIDEOGAME_ID, force = false } = {}) {
+    if (!process.env.STARTGG_API_TOKEN) {
+        return { refreshed: false, reason: 'STARTGG_API_TOKEN not set', added: [] };
+    }
+    if (!force && Date.now() - lastRefreshAt < REFRESH_INTERVAL_MS) {
+        return { refreshed: false, reason: 'recently refreshed', added: [] };
+    }
+    if (inflight) return inflight;
+
+    inflight = (async () => {
+        const { gqlQuery } = require('./startgg-client');
+        const data = await gqlQuery(`
+            query VideogameCharacters($id: ID!) {
+                videogame(id: $id) {
+                    id
+                    name
+                    characters {
+                        id
+                        name
+                        images { url type }
+                    }
+                }
+            }
+        `, { id: String(videogameId || SF6_VIDEOGAME_ID) });
+
+        const characters = data?.videogame?.characters || [];
+        const added = [];
+        for (const c of characters) {
+            const id = parseInt(c?.id, 10);
+            const name = cleanName(c?.name);
+            if (!Number.isInteger(id) || id <= 0 || !name) continue;
+
+            if (!CHARACTER_MAP[id]) {
+                CHARACTER_MAP[id] = name;
+                added.push(name);
+            }
+            if (!CHARACTER_ICONS[name]) {
+                const icon = cleanIconUrl(c.images);
+                if (icon) CHARACTER_ICONS[name] = icon;
+            }
+        }
+
+        lastRefreshAt = Date.now();
+        if (added.length) console.log(`Characters: learned ${added.length} new from start.gg: ${added.join(', ')}`);
+        return { refreshed: true, total: characters.length, added };
+    })().finally(() => { inflight = null; });
+
+    return inflight;
+}
+
+// Games synced before a character was known were stored as "Character <id>".
+// Rename those rows to the real name now that CHARACTER_MAP has it.
+async function repairPlaceholderCharacters() {
+    const pool = require('../db/pool');
+    const { rows } = await pool.query(`
+        SELECT DISTINCT c FROM (
+            SELECT winner_char AS c FROM games
+            UNION
+            SELECT loser_char AS c FROM games
+        ) t
+        WHERE c LIKE 'Character %'
+    `);
+
+    let updated = 0;
+    const renamed = [];
+    for (const { c } of rows) {
+        const match = PLACEHOLDER_RE.exec(c);
+        if (!match) continue;
+        const name = CHARACTER_MAP[parseInt(match[1], 10)];
+        if (!name) continue;
+
+        const w = await pool.query('UPDATE games SET winner_char = $1 WHERE winner_char = $2', [name, c]);
+        const l = await pool.query('UPDATE games SET loser_char = $1 WHERE loser_char = $2', [name, c]);
+        updated += w.rowCount + l.rowCount;
+        renamed.push(`${c} -> ${name}`);
+    }
+
+    if (updated) console.log(`Characters: repaired ${updated} game rows (${renamed.join(', ')})`);
+    return { updated, renamed };
+}
+
+module.exports = {
+    SF6_VIDEOGAME_ID,
+    CHARACTER_MAP,
+    CHARACTER_ICONS,
+    CHARACTER_BANNERS,
+    resolveCharacter,
+    getCharacterIcon,
+    getCharacterBanner,
+    refreshCharacters,
+    repairPlaceholderCharacters
+};

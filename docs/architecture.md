@@ -164,10 +164,12 @@ Gamertags are stripped of control characters and HTML metacharacters and capped
 at 64 chars on the way in, so an attacker-chosen start.gg tag can't carry markup
 into the database.
 
-Character IDs are mapped to names in `sync/ingest.js` and names to art in
-`sync/characters.js`. **Both need updating when Capcom ships a new DLC
-character** — icons come from start.gg's CDN, banners are local files in
-`public/img/characters/`.
+Character IDs, names, icons and banners all live in `sync/characters.js`. The
+static maps there are a fallback: `refreshCharacters()` fetches the live SF6
+roster from start.gg at sync time and at startup, so a new DLC character gets its
+name and icon without a code change. Only banners are local files in
+`public/img/characters/` and still need adding by hand (see
+[`docs/operations.md`](operations.md#adding-a-new-sf6-character)).
 
 ## Overlay and scoreboard app
 
